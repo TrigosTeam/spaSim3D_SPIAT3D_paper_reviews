@@ -3,7 +3,7 @@ library(SPIAT3D)
 # Functions ----
 convert_df_to_spe <- function(df) {
   spe <- SpatialExperiment::SpatialExperiment(
-    assay = matrix(data = NA, nrow = nrow(df), ncol = nrow(df)),
+    assay = matrix(data = NA, nrow = 0, ncol = nrow(df)),
     colData = df,
     spatialCoordsNames = c("Cell.X.Position", "Cell.Y.Position", "Cell.Z.Position"))
   
@@ -282,7 +282,7 @@ mouse_hypothalamus_md <- spe_metadata_cluster_template("regular", "network", mou
 mouse_hypothalamus_md <- spe_metadata_cluster_template("regular", "ellipsoid", mouse_hypothalamus_md)
 
 
-mouse_hypothalamus_md$background$n_cells <- 30000
+mouse_hypothalamus_md$background$n_cells <- 70000
 mouse_hypothalamus_md$background$length <- 100
 mouse_hypothalamus_md$background$width <- 100
 mouse_hypothalamus_md$background$height <- 50
@@ -363,9 +363,9 @@ SPIAT3D::plot_cells3D(mouse_hypothalamus_sim_spe, feature_colname = "Cell.Type")
 # Original
 setwd("/home/dle/R/data3D/stomics_fly")
 E16_18h_df <- read.csv("E16-18h_df.csv")
+E16_18h_df$Cell.X.Position <- E16_18h_df$Cell.X.Position * 10 + 265
+E16_18h_df$Cell.Y.Position <- E16_18h_df$Cell.Y.Position * 10 + 160
 E16_18h_df$Cell.Z.Position <- E16_18h_df$Cell.Z.Position * 10
-E16_18h_df$Cell.X.Position <- E16_18h_df$Cell.X.Position * 10
-E16_18h_df$Cell.Y.Position <- E16_18h_df$Cell.Y.Position * 10
 
 drosphilia_egg_real_spe <- convert_df_to_spe(E16_18h_df)
 
@@ -399,7 +399,7 @@ egg_md <- spe_metadata_cluster_template("regular", "ellipsoid", egg_md)
 egg_md <- spe_metadata_cluster_template("regular", "ellipsoid", egg_md)
 egg_md <- spe_metadata_cluster_template("regular", "sphere", egg_md)
 
-egg_md$background$n_cells <- 40000
+egg_md$background$n_cells <- 15000
 egg_md$background$length <- 100
 egg_md$background$width <- 70
 egg_md$background$height <- 40
@@ -465,6 +465,11 @@ egg_md$cluster_8$centre_loc <- c(80, 50, 32)
 
 drosphilia_egg_sim_spe <- simulate_spe_metadata3D(egg_md, plot_image = F)
 
+# Update coords to match real data
+SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.X.Position"] <- SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.X.Position"] * 5
+SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Y.Position"] * 4.5
+SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Z.Position"] * 2
+
 plot_cells3D(drosphilia_egg_sim_spe, 
              feature_colname = "Cell.Type",
              plot_cell_types = 
@@ -489,29 +494,31 @@ plot_cells3D(drosphilia_egg_sim_spe,
 # Original
 setwd("/home/dle/R/data3D/spateo")
 mouse_E11.5_embryo <- read.csv("mouse_E11.5_embryo.csv")
-cells <- names(sort(table(mouse_E11.5_embryo$Cell.Type), decreasing = TRUE))[1:12]
+mouse_embryo_cells <- names(sort(table(mouse_E11.5_embryo$Cell.Type), decreasing = TRUE))[1:12]
 
-mouse_E11.5_embryo$Cell.X.Position <- mouse_E11.5_embryo$Cell.X.Position + 1000
-mouse_E11.5_embryo$Cell.Y.Position <- mouse_E11.5_embryo$Cell.Y.Position + 1000
-mouse_E11.5_embryo$Cell.Z.Position <- mouse_E11.5_embryo$Cell.Z.Position + 1000
-plot_cells3D_df(mouse_E11.5_embryo[sample(nrow(mouse_E11.5_embryo), 100000), ],
-                aspectmode = "data",
-                feature_colname = "Cell.Type",
-                plot_cell_types = cells,
-                plot_colours = c(
-                  "#33135b",
-                  "#73ec81",
-                  "#9437a8",
-                  "#b8db50",
-                  "#0062c5",
-                  "#f77e3b",
-                  "#48bbff",
-                  "#bb0036",
-                  "#4deeac",
-                  "#770026",
-                  "#007128",
-                  "#d99dff"
-                ))
+mouse_E11.5_embryo$Cell.X.Position <- mouse_E11.5_embryo$Cell.X.Position - 580
+mouse_E11.5_embryo$Cell.Y.Position <- mouse_E11.5_embryo$Cell.Y.Position - 38
+mouse_E11.5_embryo$Cell.Z.Position <- mouse_E11.5_embryo$Cell.Z.Position - 305
+
+mouse_embryo_real_spe <- convert_df_to_spe(mouse_E11.5_embryo)
+
+SPIAT3D::plot_cells3D(mouse_embryo_real_spe, 
+                      feature_colname = "Cell.Type",
+                      plot_cell_types = mouse_embryo_cells,
+                      plot_colours = c(
+                        "#33135b",
+                        "#73ec81",
+                        "#9437a8",
+                        "#b8db50",
+                        "#0062c5",
+                        "#f77e3b",
+                        "#48bbff",
+                        "#bb0036",
+                        "#4deeac",
+                        "#770026",
+                        "#007128",
+                        "#d99dff"
+                      ))
 
 
 # using spaSim-3D
@@ -528,7 +535,7 @@ mouse_md <- spe_metadata_cluster_template("regular", "cylinder", mouse_md)
 mouse_md <- spe_metadata_cluster_template("regular", "cylinder", mouse_md)
 
 
-mouse_md$background$n_cells <- 100000
+mouse_md$background$n_cells <- 7000000
 mouse_md$background$length <- 100
 mouse_md$background$width <- 100
 mouse_md$background$height <- 50
@@ -594,11 +601,14 @@ mouse_md$cluster_10$radius <- 5
 mouse_md$cluster_10$start_loc <- c(100, 40, 25)
 mouse_md$cluster_10$end_loc <- c(100, 25, 25)
 
-mouse_spe <- simulate_spe_metadata3D(mouse_md, plot_image = F)
-SpatialExperiment::spatialCoords(mouse_spe) <- SpatialExperiment::spatialCoords(mouse_spe) + 1000
-plot_cells3D(mouse_spe,
+mouse_embryo_sim_spe <- simulate_spe_metadata3D(mouse_md, plot_image = F)
+SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.X.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.X.Position"] * 13
+SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] * 16
+SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] * 10
+
+plot_cells3D(mouse_embryo_sim_spe,
              feature_colname = "Cell.Type",
-             plot_cell_types = cells,
+             plot_cell_types = mouse_embryo_cells,
              plot_colours = c(
                "#33135b",
                "#73ec81",
