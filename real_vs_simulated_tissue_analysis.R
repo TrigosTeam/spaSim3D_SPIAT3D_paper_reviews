@@ -31,14 +31,14 @@ analyse_3D_data_real_and_sim <- function(
     n_cell_type_combinations <- length(cell_types)^2
     
     # Define AMD data frames as well as constants
-    AMD_df_colnames <- c("reference", "target", "AMD")
+    AMD_df_colnames <- c("reference", "target", "AMD", "data_type")
     AMD_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
     # Define MS, NMS, ANC, ACIN, CKR, CLR, CGR, COO, ANE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
-    MS_df_colnames <- c("reference", "target", radii_colnames)
+    MS_df_colnames <- c("reference", "target", radii_colnames, "data_type")
     MS_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
@@ -47,19 +47,19 @@ analyse_3D_data_real_and_sim <- function(
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
     
-    PBSAC_df_colnames <- c("reference", "target", "PBSAC")
+    PBSAC_df_colnames <- c("reference", "target", "PBSAC", "data_type")
     PBSAC_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(PBSAC_df_colnames)))
     colnames(PBSAC_df) <- PBSAC_df_colnames
     
-    PBP_df_colnames <- c("reference", "target", thresholds_colnames)
+    PBP_df_colnames <- c("reference", "target", thresholds_colnames, "data_type")
     PBP_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(PBP_df_colnames)))
     colnames(PBP_df) <- PBP_df_colnames
     
-    EBSAC_df_colnames <- c("cell_types", "EBSAC")
+    EBSAC_df_colnames <- c("cell_types", "EBSAC", "data_type")
     EBSAC_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(EBSAC_df_colnames)))
     colnames(EBSAC_df) <- EBSAC_df_colnames
     
-    EBP_df_colnames <- c("cell_types", thresholds_colnames)
+    EBP_df_colnames <- c("cell_types", thresholds_colnames, "data_type")
     EBP_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(EBP_df_colnames)))
     colnames(EBP_df) <- EBP_df_colnames
     
@@ -98,9 +98,11 @@ analyse_3D_data_real_and_sim <- function(
     
     if (i == 1) {
       spe <- data3D_real_spe
+      data_type <- "real"
     }
     else if (i == 2) {
       spe <- data3D_sim_spe
+      data_type <- "sim"
     }
     
     ### 3D analysis -----------------------------
@@ -117,6 +119,7 @@ analyse_3D_data_real_and_sim <- function(
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "reference"] <- minimum_distance_data_summary$reference
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "target"] <- minimum_distance_data_summary$target
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "AMD"] <- minimum_distance_data_summary$mean
+    metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "data_type"] <- data_type
     
     # Need a new index for gradient-based data which increments after each target cell type
     pair_index <- n_cell_type_combinations * (i - 1) + 1 
@@ -131,19 +134,19 @@ analyse_3D_data_real_and_sim <- function(
       
       for (target_cell_type in cell_types) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
-        metric_df_list[["ANC"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["ACIN"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["CKR"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["CLR"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["CGR"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["CK"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["CL"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["CG"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["MS"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["NMS"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["ANE"]][pair_index, c("reference", "target")] <- c(reference_cell_type, 
-                                                                           paste(reference_cell_type, target_cell_type, sep = ","))
+        metric_df_list[["ANC"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["ACIN"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["CKR"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["CLR"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["COO"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["CGR"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["CK"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["CL"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["CG"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["MS"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["NMS"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["ANE"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, 
+                                                                           paste(reference_cell_type, target_cell_type, sep = ","), data_type)
         
         
         if (is.null(gradient_data)) {
@@ -185,11 +188,11 @@ analyse_3D_data_real_and_sim <- function(
         }
         
         # Spatial heterogeneity metrics
-        metric_df_list[["PBSAC"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
-        metric_df_list[["PBP"]][pair_index, c("reference", "target")] <- c(reference_cell_type, target_cell_type)
+        metric_df_list[["PBSAC"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["PBP"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         
-        metric_df_list[["EBSAC"]][pair_index, c("cell_types")] <- c(paste(reference_cell_type, target_cell_type, sep = ","))
-        metric_df_list[["EBP"]][pair_index, c("cell_types")] <- c(paste(reference_cell_type, target_cell_type, sep = ","))
+        metric_df_list[["EBSAC"]][pair_index, c("cell_types", "data_type")] <- c(paste(reference_cell_type, target_cell_type, sep = ","), data_type)
+        metric_df_list[["EBP"]][pair_index, c("cell_types", "data_type")] <- c(paste(reference_cell_type, target_cell_type, sep = ","), data_type)
         
         if (reference_cell_type != target_cell_type) {
           proportion_grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe, 
@@ -252,6 +255,58 @@ analyse_3D_data_real_and_sim <- function(
       }
     }
   }
+  
+  ## Turn gradient metrics into AUC and add to metric_df list
+  get_AUC_for_radii_gradient_metrics <- function(y) {
+    x <- radii
+    h <- diff(x)[1]
+    n <- length(x)
+    
+    AUC <- (h / 2) * (y[1] + 2 * sum(y[2:(n - 1)]) + y[n])
+    
+    return(AUC)
+  }
+  add_AUC_for_radii_gradient_metrics_to_metric_df_list3D <- function(metric_df_list) {
+    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "COO", "CK", "CL", "CG")
+    
+    for (metric in gradient_radii_metrics) {
+      metric_AUC_name <- paste(metric, "AUC", sep = "_")
+      
+      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "COO", "CK", "CL", "CG")) {
+        subset_colnames <- c("data_type", "reference", "target", metric_AUC_name)
+      }
+      else {
+        stop("Unknown metric?")
+      }
+      
+      df <- metric_df_list[[metric]]
+      df[[metric_AUC_name]] <- apply(df[ , radii_colnames], 1, get_AUC_for_radii_gradient_metrics)
+      df <- df[ , subset_colnames]
+      metric_df_list[[metric_AUC_name]] <- df
+    }
+    
+    # PBP_AUC 3D
+    PBP_df <- metric_df_list[["PBP"]]
+    PBP_df$PBP_AUC <- apply(PBP_df[ , thresholds_colnames], 1, function(y) {
+      sum(diff(thresholds) * (head(y, -1) + tail(y, -1)) / 2)
+    })
+    PBP_AUC_df <- PBP_df[ , c("data_type", "reference", "target", "PBP_AUC")]
+    metric_df_list[["PBP_AUC"]] <- PBP_AUC_df
+    
+    
+    # EBP_AUC 3D
+    EBP_df <- metric_df_list[["EBP"]]
+    EBP_df$EBP_AUC <- apply(EBP_df[ , thresholds_colnames], 1, function(y) {
+      sum(diff(thresholds) * (head(y, -1) + tail(y, -1)) / 2)
+    })
+    EBP_AUC_df <- EBP_df[ , c("data_type", "cell_types", "EBP_AUC")]
+    metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
+    
+    return(metric_df_list)
+  }
+  
+  metric_df_list <- add_AUC_for_radii_gradient_metrics_to_metric_df_list3D(metric_df_list)
+  
   return(metric_df_list)
 }
 
@@ -639,6 +694,56 @@ mouse_hypothalamus_metric_df_list <-
     mouse_hypothalamus_cell_types
   )
 
-# Drosphilia Egg
+mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list.RDS")
 
-# Mouse embryo
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "COO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
+             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+
+# Convert metric_df_list into data frame for plotting
+plot_df <- data.frame()
+for (metric in metrics) {
+  metric_df <- mouse_hypothalamus_metric_df_list[[metric]]
+  
+  # Add pair column
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+  }
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    metric_df$pair <- gsub(',', '/', metric_df$target)
+  }
+  else {
+    # Add reference-target column
+    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+  }
+  
+  # Update metric_df layout
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    metric_df <- metric_df %>%
+      pivot_wider(
+        id_cols = c(cell_types, pair),
+        names_from = data_type,
+        values_from = metric
+      )
+  }
+  else {
+    metric_df <- metric_df %>%
+      pivot_wider(
+        id_cols = c(reference, target, pair),
+        names_from = data_type,
+        values_from = metric
+      )  
+  }
+  metric_df <- data.frame(metric_df)
+  metric_df$metric <- metric
+  plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
+}
+plot_df$error <- (plot_df$sim - plot_df$real) / plot_df$real * 100
+
+library(ggplot2)
+fig <- ggplot(plot_df, aes(metric, error)) +
+  geom_boxplot()
+
+fig
+
