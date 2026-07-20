@@ -463,5 +463,7 @@ parameters_df <- generate_random_parameters(
 )
 
 SD1_metric_df_list <- analyse_SD1_simulations(parameters_df)
+saveRDS(SD1_metric_df_list, "~/python/SD1_metric_df_list.RDS")
+
 
 
