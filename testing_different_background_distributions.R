@@ -1,9 +1,143 @@
-# Code to generate SD1 and to perform SPIAT-3D analyis on SD2.
 # Set seed for consistency
 set.seed(678999821)
-
+library(SpatialExperiment)
+library(dplyr)
 
 # Functions -----
+check_input_parameters <- function(input_parameters) {
+  
+  input_parameter_names <- names(input_parameters)
+  
+  check_value <- 0
+  
+  is_equal_with_tolerance <- function(x, y, tolerance = 1e-6) {
+    abs(x - y) <= tolerance
+  }
+  
+  for (input_parameter_name in input_parameter_names) {
+    input_parameter <- input_parameters[[input_parameter_name]]
+    
+    # spe
+    if (input_parameter_name == "spe" && class(input_parameter) != "SpatialExperiment") {
+      check_value <- 1
+      break
+    }
+    # Positive integer
+    if (input_parameter_name %in% c("n_cells", "n_edges") && !(is.integer(input_parameter) && length(input_parameter) == 1 || (is.numeric(input_parameter) && length(input_parameter) == 1 && input_parameter > 0 && input_parameter%%1 == 0))) {
+      check_value <- 2
+      break
+    }  
+    # Positive numeric
+    if (input_parameter_name %in% c("length", "width", "height", "radius", "x_radius", "y_radius", "z_radius", "ring_width", "inner_ring_width", "outer_ring_width") && !(is.numeric(input_parameter) && length(input_parameter) == 1 && input_parameter > 0)) {
+      check_value <- 3
+      break
+    }
+    # Non-negative numeric
+    if (input_parameter_name %in% c("minimum_distance_between_cells") && !(is.numeric(input_parameter) && length(input_parameter) == 1 && input_parameter >= 0)) {
+      check_value <- 4
+      break
+    }
+    # Numeric between 0 and 1
+    if (input_parameter_name %in% c("jitter_proportion") && !(is.numeric(input_parameter) && length(input_parameter) == 1 && input_parameter >= 0 && input_parameter <= 1)) {
+      check_value <- 5
+      break
+    }
+    # Character
+    if (input_parameter_name %in% c("background_cell_type") && !(is.character(input_parameter)) && length(input_parameter) == 1) {
+      check_value <- 6
+      break
+    }
+    # Logical
+    if (input_parameter_name %in% c("plot_image") && !(is.logical(input_parameter)) && length(input_parameter) == 1) {
+      check_value <- 7
+      break
+    }
+    # Character vector
+    if (input_parameter_name %in% c("cell_types", "cluster_cell_types", "ring_cell_types", "inner_ring_cell_types", "outer_ring_cell_types") && 
+        !(is.character(input_parameter))) {
+      check_value <- 8
+      break
+    }
+    # Numeric vector
+    if (input_parameter_name %in% c("cell_proportions", "cluster_cell_proportions", "ring_cell_proportions", "inner_ring_cell_proportions", "outer_ring_cell_proportions") && 
+        !(is.numeric(input_parameter))) {
+      check_value <- 9
+      break
+    }
+    # Numeric vector contains values between 0 and 1
+    if (input_parameter_name %in% c("cell_proportions", "cluster_cell_proportions", "ring_cell_proportions", "inner_ring_cell_proportions", "outer_ring_cell_proportions") && 
+        sum(input_parameter < 0 | input_parameter > 1) != 0) {
+      check_value <- 10
+      break
+    }
+    # Numeric vector contains values that sum to 1
+    if (input_parameter_name %in% c("cell_proportions", "cluster_cell_proportions", "ring_cell_proportions", "inner_ring_cell_proportions", "outer_ring_cell_proportions") && 
+        !is_equal_with_tolerance(sum(input_parameter), 1)) {
+      check_value <- 11
+      break
+    }
+    # Numeric vector of length 3
+    if (input_parameter_name %in% c("centre_loc", "start_loc", "end_loc") && !(is.numeric(input_parameter) && length(input_parameter) == 3)) {
+      check_value <- 12
+      break
+    }
+    # Numeric
+    if (input_parameter_name %in% c("y_z_rotation", "x_z_rotation", "x_y_rotation") && !(is.numeric(input_parameter) && length(input_parameter) == 1)) {
+      check_value <- 13
+      break
+    }
+  }
+  
+  # Two vectors match in length
+  if (check_value == 0) {
+    pairs <- data.frame(name1 = c("cell_types", "cluster_cell_types", "ring_cell_types", "inner_ring_cell_types", "outer_ring_cell_types"),
+                        name2 = c("cell_proportions", "cluster_cell_proportions", "ring_cell_proportions", "inner_ring_cell_proportions", "outer_ring_cell_proportions"))  
+    
+    for (i in seq(nrow(pairs))) {
+      name1 <- pairs[["name1"]][i]
+      name2 <- pairs[["name2"]][i]
+      if (name1 %in% input_parameter_names && name2 %in% input_parameter_names && length(input_parameters[[name1]]) != length(input_parameters[[name2]])) {
+        check_value <- 14
+        input_parameter_name <- c(name1, name2)
+        break
+      }
+    }
+  }
+  
+  # If check_value equals 0, all inputs are valid.
+  if (check_value == 0) {
+    return(TRUE)
+  }
+  # At least one input is not valid, return the first invalid input. 
+  else {
+    return(list(input_parameter_name = input_parameter_name, check_value = check_value)) 
+  }
+}
+
+input_parameter_error_message <- function(input_parameter_check_value) {
+  
+  input_parameter_name <- input_parameter_check_value[[1]]
+  check_value <- input_parameter_check_value[[2]]
+  
+  error_message <- switch(check_value,
+                          "1" = paste(input_parameter_name, "is not a SpatialExperiment object."),
+                          "2" = paste(input_parameter_name, "is not a positive integer."),
+                          "3" = paste(input_parameter_name, "is not a positive numeric."),
+                          "4" = paste(input_parameter_name, "is not a non-negative numeric."),
+                          "5" = paste(input_parameter_name, "is not a numeric between 0 and 1."),
+                          "6" = paste(input_parameter_name, "is not a character."),
+                          "7" = paste(input_parameter_name, "is not a logical (TRUE or FALSE)."),
+                          "8" = paste(input_parameter_name, "is not a character vector."),
+                          "9" = paste(input_parameter_name, "is not a numeric vector."),
+                          "10" = paste(input_parameter_name, "cannot be negative or greater than 1."),
+                          "11" = paste(input_parameter_name, "does not sum to 1."),
+                          "12" = paste(input_parameter_name, "is not a numeric vector of length 3."),
+                          "13" = paste(input_parameter_name, "is not a numeric."),
+                          "14" = paste(input_parameter_name[1], "and", input_parameter_name[2], "do not match in length."))
+  
+  return(error_message)
+}
+
 # Generate data frame containing values of important parameters
 generate_random_parameters <- function(
     n_simulations_per_parameter,
@@ -136,7 +270,7 @@ generate_updated_parameters_for_arrangement_and_shape <- function(
 
 
 # Analyse SD2 simulations
-analyse_SD2_simulations <- function(parameters_df) {
+analyse_SD2_simulations <- function(parameters_df, background_type) {
   
   # Set defined parameters/values
   cell_types <- c('A', 'B')
@@ -158,13 +292,15 @@ analyse_SD2_simulations <- function(parameters_df) {
   generate_simulation_metadata <- function(parameters_df, simulation_index) {
     
     # Constant metadata for simulations
-    simulation_metadata <- spe_metadata_background_template("random")
+    simulation_metadata <- spe_metadata_background_template(background_type)
     simulation_metadata$background$n_cells <- 30000
     simulation_metadata$background$length <- 600
     simulation_metadata$background$width <- 600
     simulation_metadata$background$height <- 300
-    simulation_metadata$background$minimum_distance_between_cells <- 10
     simulation_metadata$background$cell_types <- c("A", "B", "O") # Cell proportions will change later
+    
+    if (background_type == "hardcore") simulation_metadata$background$minimum_distance_between_cells <- 10
+    if (background_type == "ordered") simulation_metadata$background$jitter_proportion <- 0
     
     N_radius <- 125
     N_n_edges <- 20
@@ -259,9 +395,9 @@ analyse_SD2_simulations <- function(parameters_df) {
     for (i in seq(number_of_slices)) {
       bottom_z_coord_of_slice <- bottom_z_coord_of_slices[i]
       top_z_coord_of_slice <- top_z_coord_of_slices[i]
-      z_coords_of_cells_in_spe <- spatialCoords(spe)[ , "Cell.Z.Position"]
+      z_coords_of_cells_in_spe <- SpatialExperiment::spatialCoords(spe)[ , "Cell.Z.Position"]
       spe_for_slice <- spe[, bottom_z_coord_of_slice < z_coords_of_cells_in_spe & z_coords_of_cells_in_spe < top_z_coord_of_slice]
-      spatialCoords(spe_for_slice) <- spatialCoords(spe_for_slice)[ , c("Cell.X.Position", "Cell.Y.Position")]
+      SpatialExperiment::spatialCoords(spe_for_slice) <- SpatialExperiment::spatialCoords(spe_for_slice)[ , c("Cell.X.Position", "Cell.Y.Position")]
       
       spe_slices[[i]] <- spe_for_slice
     }
@@ -411,6 +547,7 @@ analyse_SD2_simulations <- function(parameters_df) {
     
     minimum_distance_data <- calculate_minimum_distances_between_cell_types3D(spe,
                                                                               cell_types,
+                                                                              feature_colname = "Cell.Type",
                                                                               show_summary = F,
                                                                               plot_image = F)
     
@@ -429,6 +566,7 @@ analyse_SD2_simulations <- function(parameters_df) {
                                                            reference_cell_type,
                                                            cell_types,
                                                            radii,
+                                                           feature_colname = "Cell.Type",
                                                            plot_image = F)
       
       for (target_cell_type in cell_types) {
@@ -489,6 +627,7 @@ analyse_SD2_simulations <- function(parameters_df) {
                                                                               n_splits,
                                                                               reference_cell_type, 
                                                                               target_cell_type,
+                                                                              feature_colname = "Cell.Type",
                                                                               plot_image = F)
           
           if (is.null(proportion_grid_metrics)) {
@@ -513,6 +652,7 @@ analyse_SD2_simulations <- function(parameters_df) {
           entropy_grid_metrics <- calculate_entropy_grid_metrics3D(spe, 
                                                                    n_splits,
                                                                    c(reference_cell_type, target_cell_type), 
+                                                                   feature_colname = "Cell.Type",
                                                                    plot_image = F)
           
           if (is.null(entropy_grid_metrics)) {
@@ -566,6 +706,7 @@ analyse_SD2_simulations <- function(parameters_df) {
       
       minimum_distance_data <- calculate_minimum_distances_between_cell_types2D(spe,
                                                                                 cell_types,
+                                                                                feature_colname = "Cell.Type",
                                                                                 show_summary = F,
                                                                                 plot_image = F)
       
@@ -585,6 +726,7 @@ analyse_SD2_simulations <- function(parameters_df) {
                                                              reference_cell_type,
                                                              cell_types,
                                                              radii,
+                                                             feature_colname = "Cell.Type",
                                                              plot_image = F)
         
         for (target_cell_type in cell_types) {
@@ -645,6 +787,7 @@ analyse_SD2_simulations <- function(parameters_df) {
                                                                                 n_splits,
                                                                                 reference_cell_type, 
                                                                                 target_cell_type,
+                                                                                feature_colname = "Cell.Type",
                                                                                 plot_image = F)
             
             if (is.null(proportion_grid_metrics)) {
@@ -669,6 +812,7 @@ analyse_SD2_simulations <- function(parameters_df) {
             entropy_grid_metrics <- calculate_entropy_grid_metrics2D(spe, 
                                                                      n_splits,
                                                                      c(reference_cell_type, target_cell_type), 
+                                                                     feature_colname = "Cell.Type",
                                                                      plot_image = F)
             
             if (is.null(entropy_grid_metrics)) {
@@ -839,24 +983,6 @@ analyse_SD2_simulations <- function(parameters_df) {
 }
 
 
-# Running the functions ------------
-updated_parameters_df <- generate_updated_parameters_for_arrangement_and_shape(
-  n_simulations_per_parameter = 1000,
-  bg_prop_A_range = c("min" = 0, "max" = 0.10),
-  bg_prop_B_range = c("min" = 0, "max" = 0.10),
-  E_radius_x_range = c("min" = 75, "max" = 125),
-  E_radius_y_range = c("min" = 75, "max" = 125),
-  E_radius_z_range = c("min" = 75, "max" = 125),
-  N_width_range = c("min" = 25, "max" = 35),
-  cluster_prop_A_range = c("min" = 0.3, "max" = 0.7),
-  ring_width_factor_range = c("min" = 0.1, "max" = 0.2) ,
-  cluster1_x_coord_range = c("min" = 125, "max" = 175)
-)
-
-SD2_metric_df_list <- analyse_SD2_simulations(updated_parameters_df)
-
-
-
 # Updated functions to generate different background distributions -----
 simulate_spe_metadata3D <- function(spe_metadata,
                                     plot_image = TRUE,
@@ -900,7 +1026,7 @@ simulate_spe_metadata3D <- function(spe_metadata,
                                                plot_image = F)
   }
   else {
-    stop("background_type parameter found in the first list must be 'random' or 'ordered'.")
+    stop("background_type parameter is invalid.")
   }
   # Apply background mixing
   spe <- simulate_mixing3D(spe,
@@ -1269,8 +1395,8 @@ simulate_ordered_background_cells3D <- function(n_cells,
 spe_metadata_background_template <- function(background_type,
                                              original_spe_metadata = NULL) {
   
-  if (background_type == "random") {
-    background_metadata <- list(background = list(background_type = "random",
+  if (background_type == "hardcore") {
+    background_metadata <- list(background = list(background_type = "hardcore",
                                                   n_cells = 20000,
                                                   length = 600,
                                                   width = 600,
@@ -1289,8 +1415,26 @@ spe_metadata_background_template <- function(background_type,
                                                   cell_types = c("Immune", "Others"),
                                                   cell_proportions = c(0.05, 0.95)))
   }
+  else if (background_type == "uniform") {
+    background_metadata <- list(background = list(background_type = "uniform",
+                                                  n_cells = 20000,
+                                                  length = 600,
+                                                  width = 600,
+                                                  height = 300,
+                                                  cell_types = c("Tumour", "Others"),
+                                                  cell_proportions = c(0.05, 0.95)))
+  }
+  else if (background_type == "poisson") {
+    background_metadata <- list(background = list(background_type = "poisson",
+                                                  n_cells = 20000,
+                                                  length = 600,
+                                                  width = 300,
+                                                  height = 300,
+                                                  cell_types = c("Immune", "Others"),
+                                                  cell_proportions = c(0.05, 0.95)))
+  }
   else {
-    stop("background_type parameter must be 'random' or 'ordered'.")
+    stop("background_type parameter is invalid.")
   }
   
   
@@ -1308,13 +1452,23 @@ spe_metadata_background_template <- function(background_type,
   return(background_metadata)
 }
 
+# Running the functions ------------
+updated_parameters_df <- generate_updated_parameters_for_arrangement_and_shape(
+  n_simulations_per_parameter = 10,
+  bg_prop_A_range = c("min" = 0, "max" = 0.10),
+  bg_prop_B_range = c("min" = 0, "max" = 0.10),
+  E_radius_x_range = c("min" = 75, "max" = 125),
+  E_radius_y_range = c("min" = 75, "max" = 125),
+  E_radius_z_range = c("min" = 75, "max" = 125),
+  N_width_range = c("min" = 25, "max" = 35),
+  cluster_prop_A_range = c("min" = 0.3, "max" = 0.7),
+  ring_width_factor_range = c("min" = 0.1, "max" = 0.2) ,
+  cluster1_x_coord_range = c("min" = 125, "max" = 175)
+)
 
 
-# Poisson (lambda from n_cells)
-
-# Hardcore (minimum_distance_between_cells = 10)
-
-# Uniform (simulate with n_cells)
-
-# Ordered (jitter_proportion = 0)
+poisson_metric_df_list <- analyse_SD2_simulations(updated_parameters_df, "poisson")
+ordered_metric_df_list <- analyse_SD2_simulations(updated_parameters_df, "ordered")
+uniform_metric_df_list <- analyse_SD2_simulations(updated_parameters_df, "uniform")
+hardcore_metric_df_list <- analyse_SD2_simulations(updated_parameters_df, "hardcore")
 
