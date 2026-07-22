@@ -48,7 +48,7 @@ analyse_SD1_simulations <- function(parameters_df) {
   cell_types <- c('A', 'B')
   n_simulations <- nrow(parameters_df)
   
-  radii <- seq(20, 100, 10)
+  radii <- seq(20, 400, 5)
   radii_colnames <- paste("r", radii, sep = "")
   
   n_splits <- 10
@@ -450,7 +450,7 @@ analyse_SD1_simulations <- function(parameters_df) {
 
 # Running the functions ----
 parameters_df <- generate_random_parameters(
-  n_simulations = 10,
+  n_simulations = 1,
   bg_prop_A_range = c("min" = 0, "max" = 0.10),
   bg_prop_B_range = c("min" = 0, "max" = 0.10),
   E_radius_x_range = c("min" = 75, "max" = 125),
@@ -463,7 +463,49 @@ parameters_df <- generate_random_parameters(
 )
 
 SD1_metric_df_list <- analyse_SD1_simulations(parameters_df)
+saveRDS(SD1_metric_df_list, "~/R/non_interactive_slurm/SD1_metric_df_list.RDS")
+write.csv(SD1_metric_df_list$spe_list$sim_1, "~/R/non_interactive_slurm/SD1_dfs/spe1.csv")
 
 
+
+SD1_metric_df_list <- readRDS("~/R/non_interactive_slurm/SD1_metric_df_list.RDS")
+
+plot_COO <- function(metric_df_list, simulation, reference_cell_type) {
+  simulation <- as.character(simulation)
+  
+  COO_metric_df <- SD1_metric_df_list$metric_df_list2D$COO
+  COO_metric_df_subset <- COO_metric_df[COO_metric_df$simulation == simulation & COO_metric_df$reference == reference_cell_type, ]
+  COO_metric_df_subset_plot <- reshape2::melt(COO_metric_df_subset)
+  COO_metric_df_subset_plot$variable <- as.numeric(gsub("r", "", COO_metric_df_subset_plot$variable))
+  
+  fig <- ggplot(COO_metric_df_subset_plot, aes(variable, value, color = target)) +
+    geom_line()
+  methods::show(fig)
+  
+}
+
+plot_COO(SD1_metric_df_list, simulation = 1, reference_cell_type = "B")
+
+plot_CL <- function(metric_df_list, simulation) {
+  simulation <- as.character(simulation)
+  
+  CL_metric_df <- SD1_metric_df_list$metric_df_list2D$CL
+  CL_metric_df_subset <- CL_metric_df[CL_metric_df$simulation == simulation & CL_metric_df$reference == CL_metric_df$target, ]
+  CL_metric_df_subset_plot <- reshape2::melt(CL_metric_df_subset)
+  CL_metric_df_subset_plot$variable <- as.numeric(gsub("r", "", CL_metric_df_subset_plot$variable))
+  
+  CL_metric_df_subset_plot <- rbind(CL_metric_df_subset_plot, data.frame(simulation = simulation,
+                                                                         reference = "NA",
+                                                                         target = "expected",
+                                                                         variable = unique(CL_metric_df_subset_plot$variable),
+                                                                         value = unique(CL_metric_df_subset_plot$variable)))
+  
+  fig <- ggplot(CL_metric_df_subset_plot, aes(variable, value, color = target)) +
+    geom_line()
+  methods::show(fig)
+  
+}
+
+plot_CL(SD1_metric_df_list, simulation = 1)
 
 
