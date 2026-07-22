@@ -676,36 +676,43 @@ check_CSR_with_ripleyK3D <- function(spe) {
   K.obs <- SPIAT3D::calculate_cross_K_gradient3D(spe = spe, 
                                                  reference_cell_type = "Others", 
                                                  target_cell_type = "Others", 
-                                                 radii = seq(1, 150, length.out = 11), 
+                                                 radii = seq(1, 151, length.out = 25), 
                                                  feature_colname = "Cell.Type", 
                                                  plot_image = F)
   
   
   # Perform ripleyK test on 999 simulated CSR distributions
+  coords <- spatialCoords(spe)
+  colnames(coords) <- c("Cell.X.Position", "Cell.Y.Position", "Cell.Z.Position")
+  xrange <- range(coords[ , "Cell.X.Position"])
+  yrange <- range(coords[ , "Cell.Y.Position"])
+  zrange <- range(coords[ , "Cell.Z.Position"])
+  n <- nrow(coords)
+  
   B <- 999
   
   K.sim <- vector("list", B)
   
   for (i in seq_len(B)) {
-    
+    print(i)
     sim <- data.frame(
-      x = runif(n, xrange[1], xrange[2]),
-      y = runif(n, yrange[1], yrange[2]),
-      z = runif(n, zrange[1], zrange[2]),
+      Cell.X.Position = runif(n, xrange[1], xrange[2]),
+      Cell.Y.Position = runif(n, yrange[1], yrange[2]),
+      Cell.Z.Position = runif(n, zrange[1], zrange[2]),
       Cell.Type = "Others"
     )
     
     sim_spe <- SpatialExperiment::SpatialExperiment(
       assay = matrix(data = NA, nrow = 0, ncol = nrow(sim)),
       colData = sim,
-      spatialCoordsNames = c("x", "y", "z"))
+      spatialCoordsNames = c("Cell.X.Position", "Cell.Y.Position", "Cell.Z.Position"))
     
-    K.sim[[i]] <-   SPIAT3D::calculate_cross_K_gradient3D(spe = sim_spe, 
-                                                          reference_cell_type = "Others", 
-                                                          target_cell_type = "Others", 
-                                                          radii = seq(0, 150, length.out = 51), 
-                                                          feature_colname = "Cell.Type", 
-                                                          plot_image = F)
+    K.sim[[i]] <- SPIAT3D::calculate_cross_K_gradient3D(spe = sim_spe, 
+                                                        reference_cell_type = "Others", 
+                                                        target_cell_type = "Others", 
+                                                        radii = seq(1, 151, length.out = 25), 
+                                                        feature_colname = "Cell.Type", 
+                                                        plot_image = F)
   }
   
   K.mat <- sapply(K.sim, function(x) x$Others)
