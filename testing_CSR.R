@@ -1,5 +1,3 @@
-library(spaSim3D)
-library(SpatialExperiment)
 # Updated functions to generate different background distributions -----
 check_input_parameters <- function(input_parameters) {
   
@@ -605,7 +603,134 @@ spe_metadata_background_template <- function(background_type,
 
 # Generate background
 poisson_bg <- spe_metadata_background_template("poisson")
+poisson_spe <- simulate_spe_metadata3D(poisson_bg, plot_image = F)
 
-poisson_spe <- simulate_spe_metadata3D(poisson_bg)
+hardcore_bg <- spe_metadata_background_template("hardcore")
+hardcore_spe <- simulate_spe_metadata3D(hardcore_bg, plot_image = F)
 
-# Check if it follows poisson distribution
+ordered_bg <- spe_metadata_background_template("ordered")
+ordered_spe <- simulate_spe_metadata3D(ordered_bg, plot_image = F)
+
+uniform_bg <- spe_metadata_background_template("uniform")
+uniform_spe <- simulate_spe_metadata3D(uniform_bg, plot_image = F)
+
+# Check if it follows CSR
+library(spaSim3D)
+library(SPIAT3D)
+library(SpatialExperiment)
+library(FNN)
+library(ggplot2)
+ 
+check_CSR_with_nnd3D <- function(spe) {
+  # Using nearest neighbour distance
+  # If clustered: nn distance is smaller than expected
+  # If CSR: nn distance matches expected
+  # If regular: nn distance is larger than expected
+  
+  coords <- spatialCoords(spe)
+  colnames(coords) <- c("x", "y", "z")
+  
+  # Perform nearest neighbour test on spe
+  nn <- get.knn(coords, k = 1)
+  nn.dist <- nn$nn.dist
+  mean.obs <- mean(nn.dist)
+  
+  
+  # Perform nearest neighbour test on 999 simulated CSR distributions
+  n <- nrow(coords)
+  
+  xrange <- range(coords[ , "x"])
+  yrange <- range(coords[ , "y"])
+  zrange <- range(coords[ , "z"])
+  
+  B <- 999
+  
+  mean.sim <- replicate(B, {
+    sim <- cbind(
+      runif(n, xrange[1], xrange[2]),
+      runif(n, yrange[1], yrange[2]),
+      runif(n, zrange[1], zrange[2])
+    )
+    mean(get.knn(sim, k = 1)$nn.dist)
+  })
+  
+  # Rank of observed statistic among simulations
+  all.stats <- c(mean.sim, mean.obs)
+  
+  r <- rank(all.stats, ties.method = "random")[length(all.stats)]
+  
+  p.low  <- r / (B + 1)
+  p.high <- (B + 2 - r) / (B + 1)
+  
+  p.value <- min(1, 2 * min(p.low, p.high))
+  
+  return(p.value)
+}
+
+check_CSR_with_ripleyK3D <- function(spe) {
+
+  # Make background cells only contain one cell type
+  spe$Cell.Type <- "Others"
+  
+  # Perform ripleyK on spe
+  K.obs <- SPIAT3D::calculate_cross_K_gradient3D(spe = spe, 
+                                                 reference_cell_type = "Others", 
+                                                 target_cell_type = "Others", 
+                                                 radii = seq(1, 150, length.out = 11), 
+                                                 feature_colname = "Cell.Type", 
+                                                 plot_image = F)
+  
+  
+  # Perform ripleyK test on 999 simulated CSR distributions
+  B <- 999
+  
+  K.sim <- vector("list", B)
+  
+  for (i in seq_len(B)) {
+    
+    sim <- data.frame(
+      x = runif(n, xrange[1], xrange[2]),
+      y = runif(n, yrange[1], yrange[2]),
+      z = runif(n, zrange[1], zrange[2]),
+      Cell.Type = "Others"
+    )
+    
+    sim_spe <- SpatialExperiment::SpatialExperiment(
+      assay = matrix(data = NA, nrow = 0, ncol = nrow(sim)),
+      colData = sim,
+      spatialCoordsNames = c("x", "y", "z"))
+    
+    K.sim[[i]] <-   SPIAT3D::calculate_cross_K_gradient3D(spe = sim_spe, 
+                                                          reference_cell_type = "Others", 
+                                                          target_cell_type = "Others", 
+                                                          radii = seq(0, 150, length.out = 51), 
+                                                          feature_colname = "Cell.Type", 
+                                                          plot_image = F)
+  }
+  
+  K.mat <- sapply(K.sim, function(x) x$Others)
+  
+  lower <- apply(K.mat, 1, quantile, probs = 0.025)
+  upper <- apply(K.mat, 1, quantile, probs = 0.975)
+  
+  envelope <- data.frame(
+    radius = K.obs$radius,
+    observed = K.obs$Others,
+    lower = lower,
+    upper = upper
+  )
+  
+  fig <- ggplot(envelope, aes(radius)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper),
+                fill = "grey80") +
+    geom_line(aes(y = observed),
+              colour = "red",
+              linewidth = 1)
+  
+  methods::show(fig)
+}
+
+poisson_p_value <- check_CSR_with_nnd3D(poisson_spe)
+hardcore_p_value <- check_CSR_with_nnd3D(hardcore_spe)
+ordered_p_value <- check_CSR_with_nnd3D(ordered_spe)
+uniform_p_value <- check_CSR_with_nnd3D(uniform_spe)
