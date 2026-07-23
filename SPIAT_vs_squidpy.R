@@ -508,4 +508,26 @@ plot_CL <- function(metric_df_list, simulation) {
 
 plot_CL(SD1_metric_df_list, simulation = 1)
 
+plot_CG <- function(metric_df_list, simulation) {
+  simulation <- as.character(simulation)
+  
+  CG_metric_df <- SD1_metric_df_list$metric_df_list2D$CG
+  CG_metric_df_subset <- CG_metric_df[CG_metric_df$simulation == simulation & CG_metric_df$reference == CG_metric_df$target, ]
+  CG_metric_df_subset_plot <- reshape2::melt(CG_metric_df_subset)
+  CG_metric_df_subset_plot$variable <- as.numeric(gsub("r", "", CG_metric_df_subset_plot$variable))
+  
+  CG_metric_df_subset_plot <- rbind(CG_metric_df_subset_plot, data.frame(simulation = simulation,
+                                                                         reference = "NA",
+                                                                         target = "expected",
+                                                                         variable = unique(CG_metric_df_subset_plot$variable),
+                                                                         value = 1))
+  
+  fig <- ggplot(CG_metric_df_subset_plot, aes(variable, value, color = target)) +
+    geom_line()
+  methods::show(fig)
+  
+}
+
+plot_CG(SD1_metric_df_list, simulation = 1)
+
 
