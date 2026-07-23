@@ -1,5 +1,8 @@
 library(spaSim3D)
 library(SPIAT3D)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
 # Functions ----
 convert_df_to_spe <- function(df) {
   spe <- SpatialExperiment::SpatialExperiment(
@@ -146,7 +149,7 @@ analyse_3D_data_real_and_sim <- function(
         metric_df_list[["MS"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["NMS"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["ANE"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, 
-                                                                           paste(reference_cell_type, target_cell_type, sep = ","), data_type)
+                                                                                        paste(reference_cell_type, target_cell_type, sep = ","), data_type)
         
         
         if (is.null(gradient_data)) {
@@ -682,8 +685,128 @@ plot_cells3D(mouse_embryo_sim_spe,
 
 
 ### 4. Analysing and comparing datasets ------
+plot_percentage_difference_vs_metric_boxplots <- function(metric_df_list) {
+  
+  plot_df <- data.frame()
+  for (metric in metrics) {
+    metric_df <- metric_df_list[[metric]]
+    
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    # Update metric_df layout
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(cell_types, pair),
+          names_from = data_type,
+          values_from = metric
+        )
+    }
+    else {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(reference, target, pair),
+          names_from = data_type,
+          values_from = metric
+        )  
+    }
+    metric_df <- data.frame(metric_df)
+    metric_df$metric <- metric
+    plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
+  }
+  plot_df$percentage_difference <- (plot_df$sim - plot_df$real) / plot_df$real * 100
+  
+  fig <- ggplot(plot_df, aes(metric, percentage_difference)) +
+    geom_boxplot() +
+    coord_cartesian(ylim = c(-1000, 1000))
+  
+  methods::show(fig)
+}
 
-# Mouse hypothalamus
+plot_sim_vs_real_scatterplots <- function(metric_df_list) {
+  
+  plot_df <- data.frame()
+  for (metric in metrics) {
+    metric_df <- metric_df_list[[metric]]
+    
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    # Update metric_df layout
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(cell_types, pair),
+          names_from = data_type,
+          values_from = metric
+        )
+    }
+    else {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(reference, target, pair),
+          names_from = data_type,
+          values_from = metric
+        )  
+    }
+    metric_df <- data.frame(metric_df)
+    metric_df$metric <- metric
+    plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
+  }
+  
+  cor_df <- plot_df %>%
+    group_by(metric) %>%
+    filter(is.finite(real), is.finite(sim)) %>%
+    summarise(
+      r = cor(real, sim),
+      x = Inf,
+      y = -Inf,
+      .groups = "drop"
+    ) %>%
+    mutate(label = sprintf("r = %.2f", r))
+  
+  print(cor_df)
+  
+  fig <- ggplot(plot_df, aes(real, sim)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,
+                linetype = "dashed", color = "red") +
+    facet_wrap(~ metric, scales = "free") +
+    geom_text(
+      data = cor_df,
+      aes(x = x, y = y, label = label),
+      inherit.aes = FALSE,
+      hjust = 1.1,
+      vjust = -0.5
+    )
+  
+  methods::show(fig)
+}
+
+# Mouse hypothalamus ----
 mouse_hypothalamus_real_spe$Cell.Type[mouse_hypothalamus_real_spe$Cell.Type %in% c("Endothelial 2")] <- "Endothelial"
 mouse_hypothalamus_cell_types <- intersect(mouse_hypothalamus_real_spe$Cell.Type, mouse_hypothalamus_sim_spe$Cell.Type)
 
@@ -696,54 +819,54 @@ mouse_hypothalamus_metric_df_list <-
 
 mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list.RDS")
 
+plot_sim_vs_real_scatterplots(mouse_hypothalamus_metric_df_list)
+plot_percentage_difference_vs_metric_boxplots(mouse_hypothalamus_metric_df_list)
+
+
+
+
+
+# drosphoilia egg ----
+drosphilia_egg_cell_types <- intersect(unique(drosphilia_egg_real_spe$Cell.Type), 
+                                       unique(drosphilia_egg_sim_spe$Cell.Type))
+
+drosphilia_egg_metric_df_list <- 
+  analyse_3D_data_real_and_sim(
+    drosphilia_egg_real_spe,
+    drosphilia_egg_sim_spe,
+    drosphilia_egg_cell_types
+  )
+
+
+# saveRDS(drosphilia_egg_metric_df_list, "~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
+drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
+
 metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "COO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
              "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
-# Convert metric_df_list into data frame for plotting
-plot_df <- data.frame()
-for (metric in metrics) {
-  metric_df <- mouse_hypothalamus_metric_df_list[[metric]]
-  
-  # Add pair column
-  if (metric %in% c("EBSAC", "EBP_AUC")) {
-    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-  }
-  else if (metric %in% c("ANE_AUC")) {
-    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-    metric_df$pair <- gsub(',', '/', metric_df$target)
-  }
-  else {
-    # Add reference-target column
-    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-  }
-  
-  # Update metric_df layout
-  if (metric %in% c("EBSAC", "EBP_AUC")) {
-    metric_df <- metric_df %>%
-      pivot_wider(
-        id_cols = c(cell_types, pair),
-        names_from = data_type,
-        values_from = metric
-      )
-  }
-  else {
-    metric_df <- metric_df %>%
-      pivot_wider(
-        id_cols = c(reference, target, pair),
-        names_from = data_type,
-        values_from = metric
-      )  
-  }
-  metric_df <- data.frame(metric_df)
-  metric_df$metric <- metric
-  plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
-}
-plot_df$error <- (plot_df$sim - plot_df$real) / plot_df$real * 100
+plot_sim_vs_real_scatterplots(drosphilia_egg_metric_df_list)
+plot_percentage_difference_vs_metric_boxplots(drosphilia_egg_metric_df_list)
 
-library(ggplot2)
-fig <- ggplot(plot_df, aes(metric, error)) +
-  geom_boxplot()
 
-fig
 
+
+# Mouse embryo -----
+mouse_embryo_cell_types <- intersect(unique(mouse_embryo_real_spe$Cell.Type), 
+                                     unique(mouse_embryo_sim_spe$Cell.Type))
+
+mouse_embryo_metric_df_list <- 
+  analyse_3D_data_real_and_sim(
+    mouse_embryo_real_spe,
+    mouse_embryo_sim_spe,
+    mouse_embryo_cell_types
+  )
+
+
+# saveRDS(mouse_embryo_metric_df_list, "~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
+mouse_embryo_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
+
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "COO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
+             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+
+plot_sim_vs_real_scatterplots(mouse_embryo_metric_df_list)
+plot_percentage_difference_vs_metric_boxplots(mouse_embryo_metric_df_list)
