@@ -4,6 +4,9 @@ library(spaSim3D)
 library(SPIAT3D)
 library(SpatialExperiment)
 library(dplyr)
+library(scales)
+library(stringr)
+library(cowplot)
 
 # Functions -----
 check_input_parameters <- function(input_parameters) {
@@ -1456,7 +1459,7 @@ spe_metadata_background_template <- function(background_type,
 
 # Running the functions ------------
 updated_parameters_df <- generate_updated_parameters_for_arrangement_and_shape(
-  n_simulations_per_parameter = 10,
+  n_simulations_per_parameter = 100,
   bg_prop_A_range = c("min" = 0, "max" = 0.10),
   bg_prop_B_range = c("min" = 0, "max" = 0.10),
   E_radius_x_range = c("min" = 75, "max" = 125),
@@ -1475,6 +1478,7 @@ uniform_metric_df_list <- analyse_SD2_simulations(updated_parameters_df, "unifor
 hardcore_metric_df_list <- analyse_SD2_simulations(updated_parameters_df, "hardcore")
 
 setwd("~/R/plots/SD2")
+saveRDS(updated_parameters_df, "updated_parameters_df.RDS")
 saveRDS(poisson_metric_df_list, "poisson_metric_df_list.RDS")
 saveRDS(ordered_metric_df_list, "ordered_metric_df_list.RDS")
 saveRDS(uniform_metric_df_list, "uniform_metric_df_list.RDS")
@@ -1483,6 +1487,12 @@ saveRDS(hardcore_metric_df_list, "hardcore_metric_df_list.RDS")
 
 
 # Plotting -----
+updated_parameters_df <- readRDS("updated_parameters_df.RDS")
+poisson_metric_df_list <- readRDS("poisson_metric_df_list.RDS")
+ordered_metric_df_list <- readRDS("ordered_metric_df_list.RDS")
+uniform_metric_df_list <- readRDS("uniform_metric_df_list.RDS")
+hardcore_metric_df_list <- readRDS("hardcore_metric_df_list.RDS")
+
 add_pair_to_metric_df <- function(metric_df, metric) {
   
   if (metric %in% c("EBSAC", "EBP_AUC")) {
@@ -1728,7 +1738,7 @@ pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot_poisson.pdf"
 for (metric in metrics) {
   
   fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot(poisson_metric_df_list,
-                                                                                                                            parameters_df,
+                                                                                                                            updated_parameters_df,
                                                                                                                             metric)
   print(fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
@@ -1740,7 +1750,7 @@ pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot_ordered.pdf"
 for (metric in metrics) {
   
   fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot(ordered_metric_df_list,
-                                                                                                                            parameters_df,
+                                                                                                                            updated_parameters_df,
                                                                                                                             metric)
   print(fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
@@ -1752,7 +1762,7 @@ pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot_uniform.pdf"
 for (metric in metrics) {
   
   fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot(uniform_metric_df_list,
-                                                                                                                            parameters_df,
+                                                                                                                            updated_parameters_df,
                                                                                                                             metric)
   print(fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
@@ -1764,7 +1774,7 @@ pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot_hardcore.pdf
 for (metric in metrics) {
   
   fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot(hardcore_metric_df_list,
-                                                                                                                            parameters_df,
+                                                                                                                            updated_parameters_df,
                                                                                                                             metric)
   print(fig_3D_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
