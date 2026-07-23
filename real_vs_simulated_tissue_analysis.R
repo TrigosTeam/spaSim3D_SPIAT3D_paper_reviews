@@ -552,6 +552,7 @@ plot_cells3D(drosphilia_egg_sim_spe,
 # Original
 setwd("/home/dle/R/data3D/spateo")
 mouse_E11.5_embryo <- read.csv("mouse_E11.5_embryo.csv")
+mouse_E11.5_embryo$Cell.Type[mouse_E11.5_embryo$Cell.Type == ""] <- "Blank"
 mouse_embryo_cells <- names(sort(table(mouse_E11.5_embryo$Cell.Type), decreasing = TRUE))[1:12]
 
 mouse_E11.5_embryo$Cell.X.Position <- mouse_E11.5_embryo$Cell.X.Position - 580
