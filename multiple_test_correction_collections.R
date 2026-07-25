@@ -1030,9 +1030,14 @@ library(ggplot2)
 library(ComplexHeatmap)
 library(circlize)
 
+ME_vs_ME_collection <- readRDS("~/R/non_interactive_slurm/ME_vs_ME_collection.RDS")
+ME_vs_lME_collection <- readRDS("~/R/non_interactive_slurm/ME_vs_lME_collection.RDS")
+MN_vs_MN_collection <- readRDS("~/R/non_interactive_slurm/MN_vs_MN_collection.RDS")
+MN_vs_lMN_collection <- readRDS("~/R/non_interactive_slurm/MN_vs_lMN_collection.RDS")
+
 simulated_collection_analyses <- list("ME_vs_ME" = ME_vs_ME_collection,
                                       "MN_vs_MN" = MN_vs_MN_collection,
-                                      "ME_vs_lME" = lME_vs_lME_collection,
+                                      "ME_vs_lME" = ME_vs_lME_collection,
                                       "MN_vs_lMN" = MN_vs_lMN_collection)
 
 # Create a heatmap with metrics on the columns and collection on the rows
