@@ -7,6 +7,7 @@ library(dplyr)
 library(scales)
 library(stringr)
 library(cowplot)
+library(ggplot2)
 
 # Functions -----
 check_input_parameters <- function(input_parameters) {
