@@ -45,7 +45,7 @@ analyse_3D_data_real_and_sim <- function(
     MS_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CK_df <- CL_df <- COO_df <- CG_df <- CK_df <- CL_df <- CG_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CL_df <- COO_df <- CK_df <- CG_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -78,9 +78,6 @@ analyse_3D_data_real_and_sim <- function(
                            CL = CL_df,
                            CG = CG_df,
                            COO = COO_df,
-                           CK = CK_df,
-                           CL = CL_df,
-                           CG = CG_df,
                            PBSAC = PBSAC_df,
                            PBP = PBP_df,
                            EBSAC = EBSAC_df,
