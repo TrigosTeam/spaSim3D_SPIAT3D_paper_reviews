@@ -20,7 +20,7 @@ library(ggplot2)
 
 
 # Testing simulate_random_background_cells function with increasing number of cells ----
-n_cells <- c(1e3, 1e4, 1e5, 1e6)
+n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
 results <- lapply(n_cells, function(n) {
   
@@ -75,7 +75,7 @@ ggplot(df, aes(size, mem_alloc / 1024^2)) +
   theme_minimal()
 
 # Testing simulate_ordered_background_cells function with increasing number of cells ----
-n_cells <- c(1e3, 1e4, 1e5, 1e6)
+n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
 results <- lapply(n_cells, function(n) {
   
