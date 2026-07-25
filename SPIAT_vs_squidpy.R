@@ -531,3 +531,76 @@ plot_CG <- function(metric_df_list, simulation) {
 plot_CG(SD1_metric_df_list, simulation = 1)
 
 
+
+# Comparing SPIAT and squidpy -----
+SD1_metric_df_list <- readRDS("~/R/non_interactive_slurm/SD1_metric_df_list.RDS")
+spiat_co_df <- SD1_metric_df_list$metric_df_list2D$COO
+spiat_L_df <- SD1_metric_df_list$metric_df_list2D$CL
+spiat_G_df <- SD1_metric_df_list$metric_df_list2D$CG
+
+
+squidpy_L_stat <- read.csv("~/R/non_interactive_slurm/L_stat.csv")
+colnames(squidpy_L_stat) <- c("radius", "reference", "value")
+squidpy_L_stat$target <- squidpy_L_stat$reference
+
+squidpy_G_stat <- read.csv("~/R/non_interactive_slurm/G_stat.csv")
+colnames(squidpy_G_stat) <- c("radius", "reference", "value")
+squidpy_G_stat$target <- squidpy_G_stat$reference
+
+squidpy_co_stat <- read.csv("~/R/non_interactive_slurm/co_stat.csv")
+
+
+
+compare_SPIAT_squidpy_co_occurrence <- function(spiat_df, squidpy_df, reference) {
+  squidpy_df <- squidpy_df[squidpy_df$reference == reference, ]
+  squidpy_df <- squidpy_df[squidpy_df$target != "O", ]
+  colnames(squidpy_df)[colnames(squidpy_df) == "distance"] <- "radius"
+  squidpy_df$tool <- "squidpy"
+  
+  spiat_df <- spiat_df[spiat_df$reference == reference, ]
+  spiat_df$simulation <- NULL
+  
+  spiat_df <- reshape2::melt(spiat_df)
+  spiat_df$variable <- as.numeric(gsub("r", "", spiat_df$variable))
+  colnames(spiat_df)[colnames(spiat_df) == "variable"] <- "radius"
+  spiat_df$tool <- "SPIAT"
+  
+  spiat_squidpy_co_df <- rbind(squidpy_df, spiat_df)
+  spiat_squidpy_co_df$target_tool <- paste(spiat_squidpy_co_df$target, spiat_squidpy_co_df$tool, sep = "-")
+  
+  fig <- ggplot(spiat_squidpy_co_df, aes(radius, value, color = target_tool)) +
+    geom_line()
+  
+  methods::show(fig)
+}
+
+compare_SPIAT_squidpy_co_occurrence(spiat_co_df, squidpy_co_stat, "A")
+compare_SPIAT_squidpy_co_occurrence(spiat_co_df, squidpy_co_stat, "B")
+
+
+
+
+compare_SPIAT_squidpy_ripley_function <- function(spiat_df, squidpy_df) {
+  squidpy_df <- squidpy_df[squidpy_df$target != "O", ]
+  colnames(squidpy_df)[colnames(squidpy_df) == "distance"] <- "radius"
+  squidpy_df$tool <- "squidpy"
+  
+  spiat_df$simulation <- NULL
+  
+  spiat_df <- spiat_df[spiat_df$reference == spiat_df$target, ]
+  spiat_df <- reshape2::melt(spiat_df)
+  spiat_df$variable <- as.numeric(gsub("r", "", spiat_df$variable))
+  colnames(spiat_df)[colnames(spiat_df) == "variable"] <- "radius"
+  spiat_df$tool <- "SPIAT"
+  
+  spiat_squidpy_combined_df <- rbind(squidpy_df, spiat_df)
+  spiat_squidpy_combined_df$target_tool <- paste(spiat_squidpy_combined_df$target, spiat_squidpy_combined_df$tool, sep = "-")
+  
+  fig <- ggplot(spiat_squidpy_combined_df, aes(radius, value, color = target_tool)) +
+    geom_line()
+  
+  methods::show(fig)
+}
+
+compare_SPIAT_squidpy_ripley_function(spiat_L_df, squidpy_L_stat)
+compare_SPIAT_squidpy_ripley_function(spiat_G_df, squidpy_G_stat)
