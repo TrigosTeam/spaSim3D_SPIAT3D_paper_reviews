@@ -38,14 +38,14 @@ analyse_3D_data_real_and_sim <- function(
     AMD_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
-    # Define MS, NMS, ANC, ACIN, CKR, CLR, CGR, COO, ANE data frames as well as constants
+    # Define MS, NMS, ANC, ACIN, CK, CL, CG, COO, ANE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
     MS_df_colnames <- c("reference", "target", radii_colnames, "data_type")
     MS_df <- data.frame(matrix(nrow = 2 * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CKR_df <- CLR_df <- COO_df <- CGR_df <- CK_df <- CL_df <- CG_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CK_df <- CL_df <- COO_df <- CG_df <- CK_df <- CL_df <- CG_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -74,9 +74,9 @@ analyse_3D_data_real_and_sim <- function(
                            ACIN = ACIN_df,
                            ANE = ANE_df,
                            ANC = ANC_df,
-                           CKR = CKR_df,
-                           CLR = CLR_df,
-                           CGR = CGR_df,
+                           CK = CK_df,
+                           CL = CL_df,
+                           CG = CG_df,
                            COO = COO_df,
                            CK = CK_df,
                            CL = CL_df,
@@ -139,12 +139,9 @@ analyse_3D_data_real_and_sim <- function(
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
         metric_df_list[["ANC"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["ACIN"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
-        metric_df_list[["CKR"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
-        metric_df_list[["CLR"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
-        metric_df_list[["COO"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
-        metric_df_list[["CGR"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["CK"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["CL"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
+        metric_df_list[["COO"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["CG"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["MS"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
         metric_df_list[["NMS"]][pair_index, c("reference", "target", "data_type")] <- c(reference_cell_type, target_cell_type, data_type)
@@ -154,12 +151,9 @@ analyse_3D_data_real_and_sim <- function(
         
         if (is.null(gradient_data)) {
           metric_df_list[["ANC"]][pair_index, radii_colnames] <- NA
-          metric_df_list[["CKR"]][pair_index, radii_colnames] <- NA
-          metric_df_list[["CLR"]][pair_index, radii_colnames] <- NA
-          metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
-          metric_df_list[["CGR"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CK"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CL"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CG"]][pair_index, radii_colnames] <- NA
           metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
           metric_df_list[["MS"]][pair_index, radii_colnames] <- NA
@@ -168,10 +162,7 @@ analyse_3D_data_real_and_sim <- function(
         }
         else {
           metric_df_list[["ANC"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_counts"]][[target_cell_type]]
-          metric_df_list[["CKR"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
-          metric_df_list[["CLR"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
-          metric_df_list[["CGR"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
           metric_df_list[["CK"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] - gradient_data[["cross_K"]][["expected"]]
           metric_df_list[["CL"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] - gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["CG"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] - gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
@@ -823,13 +814,14 @@ mouse_hypothalamus_metric_df_list <-
     thresholds = seq(0.01, 1, 0.01)
   )
 
-mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list.RDS")
+saveRDS(mouse_hypothalamus_metric_df_list, "~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
+mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
+
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "COO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
+             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 plot_sim_vs_real_scatterplots(mouse_hypothalamus_metric_df_list)
 plot_percentage_difference_vs_metric_boxplots(mouse_hypothalamus_metric_df_list)
-
-
-
 
 
 # drosphoilia egg ----
