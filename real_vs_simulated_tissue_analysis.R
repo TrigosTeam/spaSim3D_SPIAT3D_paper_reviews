@@ -313,6 +313,127 @@ analyse_3D_data_real_and_sim <- function(
   return(metric_df_list)
 }
 
+plot_percentage_difference_vs_metric_boxplots <- function(metric_df_list) {
+  
+  plot_df <- data.frame()
+  for (metric in metrics) {
+    metric_df <- metric_df_list[[metric]]
+    
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    # Update metric_df layout
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(cell_types, pair),
+          names_from = data_type,
+          values_from = metric
+        )
+    }
+    else {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(reference, target, pair),
+          names_from = data_type,
+          values_from = metric
+        )  
+    }
+    metric_df <- data.frame(metric_df)
+    metric_df$metric <- metric
+    plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
+  }
+  plot_df$percentage_difference <- (plot_df$sim - plot_df$real) / plot_df$real * 100
+  
+  fig <- ggplot(plot_df, aes(metric, percentage_difference)) +
+    geom_boxplot() +
+    coord_cartesian(ylim = c(-1000, 1000))
+  
+  methods::show(fig)
+}
+
+plot_sim_vs_real_scatterplots <- function(metric_df_list) {
+  
+  plot_df <- data.frame()
+  for (metric in metrics) {
+    metric_df <- metric_df_list[[metric]]
+    
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    # Update metric_df layout
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(cell_types, pair),
+          names_from = data_type,
+          values_from = metric
+        )
+    }
+    else {
+      metric_df <- metric_df %>%
+        pivot_wider(
+          id_cols = c(reference, target, pair),
+          names_from = data_type,
+          values_from = metric
+        )  
+    }
+    metric_df <- data.frame(metric_df)
+    metric_df$metric <- metric
+    plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
+  }
+  
+  cor_df <- plot_df %>%
+    group_by(metric) %>%
+    filter(is.finite(real), is.finite(sim)) %>%
+    summarise(
+      r = cor(real, sim),
+      x = Inf,
+      y = -Inf,
+      .groups = "drop"
+    ) %>%
+    mutate(label = sprintf("r = %.2f", r))
+  
+  print(cor_df)
+  
+  fig <- ggplot(plot_df, aes(real, sim)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,
+                linetype = "dashed", color = "red") +
+    facet_wrap(~ metric, scales = "free") +
+    geom_text(
+      data = cor_df,
+      aes(x = x, y = y, label = label),
+      inherit.aes = FALSE,
+      hjust = 1.1,
+      vjust = -0.5
+    )
+  
+  methods::show(fig)
+}
+
 ### 1. Download and simulate mouse hypothalamus ----
 
 # Original
@@ -561,7 +682,7 @@ mouse_E11.5_embryo$Cell.Z.Position <- mouse_E11.5_embryo$Cell.Z.Position - 305
 
 mouse_embryo_real_spe <- convert_df_to_spe(mouse_E11.5_embryo)
 
-SPIAT3D::plot_cells3D(mouse_embryo_real_spe, 
+SPIAT3D::plot_cells3D(mouse_embryo_real_spe[ , sample.int(ncol(mouse_embryo_real_spe), size = 10000, replace = TRUE)], 
                       feature_colname = "Cell.Type",
                       plot_cell_types = mouse_embryo_cells,
                       plot_colours = c(
@@ -594,7 +715,7 @@ mouse_md <- spe_metadata_cluster_template("regular", "cylinder", mouse_md)
 mouse_md <- spe_metadata_cluster_template("regular", "cylinder", mouse_md)
 
 
-mouse_md$background$n_cells <- 7000000
+mouse_md$background$n_cells <- 7000000 * 3
 mouse_md$background$length <- 100
 mouse_md$background$width <- 100
 mouse_md$background$height <- 50
@@ -661,6 +782,8 @@ mouse_md$cluster_10$start_loc <- c(100, 40, 25)
 mouse_md$cluster_10$end_loc <- c(100, 25, 25)
 
 mouse_embryo_sim_spe <- simulate_spe_metadata3D(mouse_md, plot_image = F)
+mouse_embryo_sim_spe <- mouse_embryo_sim_spe[ , mouse_embryo_sim_spe$Cell.Type != "other"]
+
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.X.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.X.Position"] * 13
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] * 16
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] * 10
@@ -686,136 +809,18 @@ plot_cells3D(mouse_embryo_sim_spe,
 
 
 ### 4. Analysing and comparing datasets ------
-plot_percentage_difference_vs_metric_boxplots <- function(metric_df_list) {
-  
-  plot_df <- data.frame()
-  for (metric in metrics) {
-    metric_df <- metric_df_list[[metric]]
-    
-    # Add pair column
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    # Update metric_df layout
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      metric_df <- metric_df %>%
-        pivot_wider(
-          id_cols = c(cell_types, pair),
-          names_from = data_type,
-          values_from = metric
-        )
-    }
-    else {
-      metric_df <- metric_df %>%
-        pivot_wider(
-          id_cols = c(reference, target, pair),
-          names_from = data_type,
-          values_from = metric
-        )  
-    }
-    metric_df <- data.frame(metric_df)
-    metric_df$metric <- metric
-    plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
-  }
-  plot_df$percentage_difference <- (plot_df$sim - plot_df$real) / plot_df$real * 100
-  
-  fig <- ggplot(plot_df, aes(metric, percentage_difference)) +
-    geom_boxplot() +
-    coord_cartesian(ylim = c(-1000, 1000))
-  
-  methods::show(fig)
-}
-
-plot_sim_vs_real_scatterplots <- function(metric_df_list) {
-  
-  plot_df <- data.frame()
-  for (metric in metrics) {
-    metric_df <- metric_df_list[[metric]]
-    
-    # Add pair column
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    # Update metric_df layout
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      metric_df <- metric_df %>%
-        pivot_wider(
-          id_cols = c(cell_types, pair),
-          names_from = data_type,
-          values_from = metric
-        )
-    }
-    else {
-      metric_df <- metric_df %>%
-        pivot_wider(
-          id_cols = c(reference, target, pair),
-          names_from = data_type,
-          values_from = metric
-        )  
-    }
-    metric_df <- data.frame(metric_df)
-    metric_df$metric <- metric
-    plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair")])
-  }
-  
-  cor_df <- plot_df %>%
-    group_by(metric) %>%
-    filter(is.finite(real), is.finite(sim)) %>%
-    summarise(
-      r = cor(real, sim),
-      x = Inf,
-      y = -Inf,
-      .groups = "drop"
-    ) %>%
-    mutate(label = sprintf("r = %.2f", r))
-  
-  print(cor_df)
-  
-  fig <- ggplot(plot_df, aes(real, sim)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed", color = "red") +
-    facet_wrap(~ metric, scales = "free") +
-    geom_text(
-      data = cor_df,
-      aes(x = x, y = y, label = label),
-      inherit.aes = FALSE,
-      hjust = 1.1,
-      vjust = -0.5
-    )
-  
-  methods::show(fig)
-}
-
 # Mouse hypothalamus ----
 mouse_hypothalamus_real_spe$Cell.Type[mouse_hypothalamus_real_spe$Cell.Type %in% c("Endothelial 2")] <- "Endothelial"
 mouse_hypothalamus_cell_types <- intersect(mouse_hypothalamus_real_spe$Cell.Type, mouse_hypothalamus_sim_spe$Cell.Type)
 
 mouse_hypothalamus_metric_df_list <- 
   analyse_3D_data_real_and_sim(
-    mouse_hypothalamus_real_spe,
-    mouse_hypothalamus_sim_spe,
-    mouse_hypothalamus_cell_types
+    data3D_real_spe = mouse_hypothalamus_real_spe,
+    data3D_sim_spe = mouse_hypothalamus_sim_spe,
+    cell_types = mouse_hypothalamus_cell_types,
+    radii = seq(0.2, 1, 0.1),
+    n_splits = 10,
+    thresholds = seq(0.01, 1, 0.01)
   )
 
 mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list.RDS")
@@ -833,9 +838,12 @@ drosphilia_egg_cell_types <- intersect(unique(drosphilia_egg_real_spe$Cell.Type)
 
 drosphilia_egg_metric_df_list <- 
   analyse_3D_data_real_and_sim(
-    drosphilia_egg_real_spe,
-    drosphilia_egg_sim_spe,
-    drosphilia_egg_cell_types
+    data3D_real_spe = drosphilia_egg_real_spe,
+    data3D_sim_spe = drosphilia_egg_sim_spe,
+    cell_types = drosphilia_egg_cell_types,
+    radii = seq(20, 100, 10),
+    n_splits = 10,
+    thresholds = seq(0.01, 1, 0.01)
   )
 
 
@@ -857,9 +865,12 @@ mouse_embryo_cell_types <- intersect(unique(mouse_embryo_real_spe$Cell.Type),
 
 mouse_embryo_metric_df_list <- 
   analyse_3D_data_real_and_sim(
-    mouse_embryo_real_spe,
-    mouse_embryo_sim_spe,
-    mouse_embryo_cell_types
+    data3D_real_spe = mouse_embryo_real_spe,
+    data3D_sim_spe = mouse_embryo_sim_spe,
+    cell_types = mouse_embryo_cell_types,
+    radii = seq(20, 200, 10),
+    n_splits = 10,
+    thresholds = seq(0.01, 1, 0.01)
   )
 
 
