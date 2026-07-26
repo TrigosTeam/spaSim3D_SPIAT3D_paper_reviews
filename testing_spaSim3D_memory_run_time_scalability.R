@@ -189,7 +189,7 @@ results <- lapply(indices, function(index) {
 plot_results_n_cells(results, n_cells)
 
 # Testing simulating ellipsoid clusters with increasing size of clusters ----
-background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e5,
+background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e6,
                                                                length = 100,
                                                                width = 100,
                                                                height = 100,
@@ -268,7 +268,7 @@ fig <- plot_grid(
 methods::show(fig)
 
 # Testing simulating networks with increasing complexity of networks ----
-background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e5,
+background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e6,
                                                                length = 100,
                                                                width = 100,
                                                                height = 100,
@@ -341,7 +341,7 @@ fig <- plot_grid(
 methods::show(fig)
 # Testing simulating clusters (excluding networks) with increasing number of clusters ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
-background_metadata$background$n_cells <- 1e5
+background_metadata$background$n_cells <- 1e6
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
 background_metadata$background$height <- 100
@@ -353,15 +353,22 @@ n_clusters <- seq(5, 25, 5)
 
 results <- lapply(n_clusters, function(n) {
   
-  cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
-                                                              sample(c("sphere", "ellipsoid", "cylinder"), 1), 
-                                                              background_metadata)
-  
-  for (i in seq_len(n - 1)) {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
-                                                                sample(c("sphere", "ellipsoid", "cylinder"), 1), 
-                                                                cluster_metadata)
-     
+  for (i in seq_len(n)) {
+    if (i == 1) {
+      cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+                                                                  "ellipsoid", 
+                                                                  background_metadata
+      )
+    }
+    else {
+      cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+                                                                  "ellipsoid", 
+                                                                  cluster_metadata
+      )
+      cluster_metadata[[i + 1]]$radii <- runif(3, 15, 30)
+      cluster_metadata[[i + 1]]$centre_loc <- runif(3, 25, 75)
+      cluster_metadata[[i + 1]]$axes_rotation <- runif(3, 0, 180)
+    }
   }
   
   mark(
