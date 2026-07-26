@@ -339,7 +339,7 @@ fig <- plot_grid(
 )
 
 methods::show(fig)
-# Testing simulating clusters (excluding networks) with increasing number of clusters ----
+# Testing simulating ellipsoid clusters with increasing number of clusters ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e6
 background_metadata$background$length <- 100
