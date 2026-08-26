@@ -846,8 +846,6 @@ plot_sim_vs_real_scatterplots(drosphilia_egg_metric_df_list)
 plot_percentage_difference_vs_metric_boxplots(drosphilia_egg_metric_df_list)
 
 
-
-
 # Mouse embryo -----
 mouse_embryo_cell_types <- intersect(unique(mouse_embryo_real_spe$Cell.Type), 
                                      unique(mouse_embryo_sim_spe$Cell.Type))
@@ -871,3 +869,95 @@ metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "COO_AUC"
 
 plot_sim_vs_real_scatterplots(mouse_embryo_metric_df_list)
 plot_percentage_difference_vs_metric_boxplots(mouse_embryo_metric_df_list)
+
+# Analysis combining all 3 datasets ----
+mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
+drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
+mouse_embryo_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
+
+metric_df_lists <- list(
+  "mouse_hypothalamus" = mouse_hypothalamus_metric_df_list,
+  "drosphilia_egg" = drosphilia_egg_metric_df_list,
+  "mouse_embryo" = mouse_embryo_metric_df_list
+)
+
+plot_df <- data.frame()
+for (metric in metrics) {
+  
+  metric_df <- data.frame()
+  
+  for (dataset_name in names(metric_df_lists)) {
+    
+    metric_df_list <- metric_df_lists[[dataset_name]]
+    
+    metric_df_temp <- metric_df_list[[metric]]
+    metric_df_temp$dataset <- dataset_name
+    
+    metric_df <- rbind(metric_df, metric_df_temp)
+  }
+  
+  # Add pair column
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+  }
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    metric_df$pair <- gsub(',', '/', metric_df$target)
+  }
+  else {
+    # Add reference-target column
+    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+  }
+  
+  # Update metric_df layout
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    metric_df <- metric_df %>%
+      pivot_wider(
+        id_cols = c(cell_types, pair, dataset),
+        names_from = data_type,
+        values_from = metric
+      )
+  }
+  else {
+    metric_df <- metric_df %>%
+      pivot_wider(
+        id_cols = c(reference, target, pair, dataset),
+        names_from = data_type,
+        values_from = metric
+      )  
+  }
+  metric_df <- data.frame(metric_df)
+  metric_df$metric <- metric
+  metric_df$dataset <- as.character(metric_df$dataset)
+  plot_df <- rbind(plot_df, metric_df[ , c("real", "sim", "metric", "pair", "dataset")])
+}
+
+cor_df <- plot_df %>%
+  group_by(metric, dataset) %>%
+  filter(is.finite(real), is.finite(sim)) %>%
+  summarise(
+    r = cor(real, sim),
+    x = Inf,
+    y = -Inf,
+    .groups = "drop"
+  ) %>%
+  mutate(label = sprintf("r = %.2f", r))
+
+print(cor_df)
+
+fig <- ggplot(plot_df, aes(real, sim)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed", color = "red") +
+  facet_grid(metric ~ dataset, 
+             scales = "free") +
+  geom_text(
+    data = cor_df,
+    aes(x = x, y = y, label = label),
+    inherit.aes = FALSE,
+    hjust = 1.1,
+    vjust = -0.5
+  )
+
+methods::show(fig)  
