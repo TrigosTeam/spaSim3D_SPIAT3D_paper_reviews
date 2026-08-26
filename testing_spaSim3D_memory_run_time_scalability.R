@@ -6,54 +6,7 @@
 # - number of clusters
 # - complexity of networks
 
-plot_results_n_cells <- function(results, n_cells) {
-  
-  
-  # Combine results
-  df <- map2_dfr(results, n_cells, ~{
-    tibble(
-      size = .y,
-      median_time = as.numeric(.x$median),      # seconds
-      mem_alloc = as.numeric(.x$mem_alloc)      # bytes
-    )
-  })
-  
-  # Runtime plot
-  p_runtime <- ggplot(df, aes(size, median_time)) +
-    geom_line() +
-    geom_point(size = 3) +
-    scale_x_log10() +
-    scale_y_log10() +
-    labs(
-      x = "Number of cells",
-      y = "Median runtime (s)"
-    ) +
-    theme_minimal()
-  
-  # Memory plot
-  p_memory <- ggplot(df, aes(size, mem_alloc / 1024^2)) +
-    geom_line() +
-    geom_point(size = 3) +
-    scale_x_log10() +
-    scale_y_log10() +
-    labs(
-      x = "Number of cells",
-      y = "Memory allocated (MB)"
-    ) +
-    theme_minimal()
-  
-  # Side-by-side
-  fig <- plot_grid(
-    p_runtime,
-    p_memory,
-    ncol = 2,
-    align = "hv"
-  )
-  
-  methods::show(fig)
-  
-  return(df)
-}
+plots <- list()
 
 # Libraries ----
 library(bench)
@@ -64,7 +17,7 @@ library(cowplot)
 library(spaSim3D)
 library(SPIAT3D)
 
-# Testing simulate_random_background_cells3D function with increasing number of cells ----
+# 1. Testing simulate_random_background_cells3D function with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
 results <- lapply(n_cells, function(n) {
@@ -82,9 +35,52 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+# Combine results
+df <- map2_dfr(results, n_cells, ~{
+  tibble(
+    size = .y,
+    median_time = as.numeric(.x$median),      # seconds
+    mem_alloc = as.numeric(.x$mem_alloc)      # bytes
+  )
+})
 
-# Testing simulate_ordered_background_cells3D function with increasing number of cells ----
+# Runtime plot
+p_runtime <- ggplot(df, aes(size, median_time)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Median runtime (s)"
+  ) +
+  theme_minimal()
+
+# Memory plot
+p_memory <- ggplot(df, aes(size, mem_alloc / 1024^2)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Memory allocated (MB)"
+  ) +
+  theme_minimal()
+
+# Side-by-side
+fig <- plot_grid(
+  p_runtime,
+  p_memory,
+  ncol = 2,
+  align = "hv"
+)
+
+methods::show(fig)
+
+plots[[1]] <- fig
+
+# 2. Testing simulate_ordered_background_cells3D function with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
 results <- lapply(n_cells, function(n) {
@@ -102,9 +98,52 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+# Combine results
+df <- map2_dfr(results, n_cells, ~{
+  tibble(
+    size = .y,
+    median_time = as.numeric(.x$median),      # seconds
+    mem_alloc = as.numeric(.x$mem_alloc)      # bytes
+  )
+})
 
-# Testing simulating ellipsoid clusters with increasing number of cells in the background ----
+# Runtime plot
+p_runtime <- ggplot(df, aes(size, median_time)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Median runtime (s)"
+  ) +
+  theme_minimal()
+
+# Memory plot
+p_memory <- ggplot(df, aes(size, mem_alloc / 1024^2)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Memory allocated (MB)"
+  ) +
+  theme_minimal()
+
+# Side-by-side
+fig <- plot_grid(
+  p_runtime,
+  p_memory,
+  ncol = 2,
+  align = "hv"
+)
+
+methods::show(fig)
+
+plots[[2]] <- fig
+
+# 3. Testing simulating ellipsoid clusters with increasing number of cells in the background ----
 n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
 background_spes <- list()
@@ -143,11 +182,52 @@ results <- lapply(indices, function(index) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+# Combine results
+df <- map2_dfr(results, n_cells, ~{
+  tibble(
+    size = .y,
+    median_time = as.numeric(.x$median),      # seconds
+    mem_alloc = as.numeric(.x$mem_alloc)      # bytes
+  )
+})
 
+# Runtime plot
+p_runtime <- ggplot(df, aes(size, median_time)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Median runtime (s)"
+  ) +
+  theme_minimal()
 
+# Memory plot
+p_memory <- ggplot(df, aes(size, mem_alloc / 1024^2)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Memory allocated (MB)"
+  ) +
+  theme_minimal()
 
-# Testing simulating network clusters with increasing number of cells in the background ----
+# Side-by-side
+fig <- plot_grid(
+  p_runtime,
+  p_memory,
+  ncol = 2,
+  align = "hv"
+)
+
+methods::show(fig)
+
+plots[[3]] <- fig
+
+# 4. Testing simulating network clusters with increasing number of cells in the background ----
 n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
 background_spes <- list()
@@ -186,9 +266,52 @@ results <- lapply(indices, function(index) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+# Combine results
+df <- map2_dfr(results, n_cells, ~{
+  tibble(
+    size = .y,
+    median_time = as.numeric(.x$median),      # seconds
+    mem_alloc = as.numeric(.x$mem_alloc)      # bytes
+  )
+})
 
-# Testing simulating ellipsoid clusters with increasing size of clusters ----
+# Runtime plot
+p_runtime <- ggplot(df, aes(size, median_time)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Median runtime (s)"
+  ) +
+  theme_minimal()
+
+# Memory plot
+p_memory <- ggplot(df, aes(size, mem_alloc / 1024^2)) +
+  geom_line() +
+  geom_point(size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Number of cells",
+    y = "Memory allocated (MB)"
+  ) +
+  theme_minimal()
+
+# Side-by-side
+fig <- plot_grid(
+  p_runtime,
+  p_memory,
+  ncol = 2,
+  align = "hv"
+)
+
+methods::show(fig)
+
+plots[[4]] <- fig
+
+# 5. Testing simulating ellipsoid clusters with increasing size of clusters ----
 background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e6,
                                                                length = 100,
                                                                width = 100,
@@ -267,7 +390,9 @@ fig <- plot_grid(
 
 methods::show(fig)
 
-# Testing simulating networks with increasing complexity of networks ----
+plots[[5]] <- fig
+
+# 6. Testing simulating networks with increasing complexity of networks ----
 background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e6,
                                                                length = 100,
                                                                width = 100,
@@ -339,7 +464,10 @@ fig <- plot_grid(
 )
 
 methods::show(fig)
-# Testing simulating ellipsoid clusters with increasing number of clusters ----
+
+plots[[6]] <- fig
+
+# 7. Testing simulating ellipsoid clusters with increasing number of clusters ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e6
 background_metadata$background$length <- 100
@@ -419,7 +547,9 @@ fig <- plot_grid(
 
 methods::show(fig)
 
-# Testing simulating empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
+plots[[7]] <- fig
+
+# 8. Testing simulating empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
@@ -624,4 +754,4 @@ fig <- plot_grid(
 
 methods::show(fig)
 
-
+plots[[8]] <- fig
