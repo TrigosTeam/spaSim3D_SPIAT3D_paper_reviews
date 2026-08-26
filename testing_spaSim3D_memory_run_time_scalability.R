@@ -421,7 +421,7 @@ methods::show(fig)
 
 # Testing simulating empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
-background_metadata$background$n_cells <- 1e6
+background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
 background_metadata$background$height <- 100
@@ -473,7 +473,7 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     
     cluster_metadata$cluster_1$cluster_cell_types <- "A"
     cluster_metadata$cluster_1$cluster_cell_proportions <- 1
-    cluster_metadata$cluster_1$radii <- c(25, 50, 75)
+    cluster_metadata$cluster_1$radii <- c(20, 30, 40)
     cluster_metadata$cluster_1$centre_loc <- c(50, 50, 50)
     cluster_metadata$cluster_1$axes_rotation <- runif(3, 0, 180)
     cluster_metadata$cluster_1$ring_cell_types <- "B"
@@ -490,6 +490,17 @@ results <- lapply(tissue_structures, function(tissue_structure) {
                                                                 "ellipsoid", 
                                                                 cluster_metadata)
     
+    cluster_metadata$cluster_1$cluster_cell_types <- "A"
+    cluster_metadata$cluster_1$cluster_cell_proportions <- 1
+    cluster_metadata$cluster_1$radii <- c(20, 30, 40)
+    cluster_metadata$cluster_1$centre_loc <- c(30, 30, 30)
+    cluster_metadata$cluster_1$axes_rotation <- runif(3, 0, 180)
+    
+    cluster_metadata$cluster_1$cluster_cell_types <- "B"
+    cluster_metadata$cluster_1$cluster_cell_proportions <- 1
+    cluster_metadata$cluster_1$radii <- c(20, 30, 40)
+    cluster_metadata$cluster_1$centre_loc <- c(70, 70, 70)
+    cluster_metadata$cluster_1$axes_rotation <- runif(3, 0, 180)
     
   }
   else if (tissue_structure == "mixed_network") {
@@ -526,6 +537,18 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 cluster_metadata)
+    
+    cluster_metadata$cluster_1$cluster_cell_types <- "A"
+    cluster_metadata$cluster_1$cluster_cell_proportions <- 1
+    cluster_metadata$cluster_1$radius <- 50
+    cluster_metadata$cluster_1$centre_loc <- c(30, 30, 30)
+    cluster_metadata$cluster_1$width <- 5
+    
+    cluster_metadata$cluster_1$cluster_cell_types <- "B"
+    cluster_metadata$cluster_1$cluster_cell_proportions <- 1
+    cluster_metadata$cluster_1$radius <- 50
+    cluster_metadata$cluster_1$centre_loc <- c(70, 70, 70)
+    cluster_metadata$cluster_1$width <- 5
   }
   else {
     stop("tissue structure not found")
@@ -556,17 +579,40 @@ p_runtime <- ggplot(df, aes(tissue_structures, median_time)) +
     x = "Tissue structure",
     y = "Median runtime (s)"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  scale_x_discrete(
+    labels = c(
+      "empty_background" = "EB",
+      "mixed_background" = "MB",
+      "mixed_ellipsoid" = "ME",
+      "ringed_ellipsoid" = "RE",
+      "separated_ellipsoid" = "SE",
+      "mixed_network" = "MN",
+      "ringed_network" = "RN",
+      "separated_network" = "SN"
+    )
+  )
 
 # Memory plot
 p_memory <- ggplot(df, aes(tissue_structures, mem_alloc / 1024^2)) +
-  geom_line() +
   geom_point(size = 3) +
   labs(
     x = "Tissue structure",
     y = "Memory allocated (MB)"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  scale_x_discrete(
+    labels = c(
+      "empty_background" = "EB",
+      "mixed_background" = "MB",
+      "mixed_ellipsoid" = "ME",
+      "ringed_ellipsoid" = "RE",
+      "separated_ellipsoid" = "SE",
+      "mixed_network" = "MN",
+      "ringed_network" = "RN",
+      "separated_network" = "SN"
+    )
+  )
 
 # Side-by-side
 fig <- plot_grid(
