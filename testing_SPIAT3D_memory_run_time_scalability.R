@@ -689,89 +689,297 @@ for (tissue_structure in tissue_structures) {
   spes[[tissue_structure]] <- simulate_spe_metadata3D(cluster_metadata, plot_image = F)
 }
 
+plots <- list()
+
 metrics <- c(
   "minimum_distances_between_cells",
   "neighbourhood_counts_gradient",
-  
+  "cells_in_neighbourhood_gradient",
+  "neighourhood_entropy_gradient",
+  "cross_K_gradient",
+  "cross_L_gradient",
+  "cross_G_gradient",
+  "mixing_scores_gradient",
+  "cell_proportion_grid_metrics",
+  "entropy_grid_metrics",
+  "spatial_autocorrelation",
+  "prevalence_gradient"
 )
 
 for (metric in metrics) {
+  if (metric == "minimum_distances_between_cells") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_minimum_distances_between_cell_types3D(spes[[tissue_structure]],
+                                                                  cell_types_of_interest = NULL,
+                                                                  feature_colname = "Cell.Type",
+                                                                  show_summary = FALSE,
+                                                                  plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "neighbourhood_counts_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_neighbourhood_counts_gradient3D(spes[[tissue_structure]],
+                                                           reference_cell_type = "A",
+                                                           target_cell_types = c("A", "B"),
+                                                           radii = seq(10, 100, 10),
+                                                           feature_colname = "Cell.Type",
+                                                           plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "cells_in_neighbourhood_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_cells_in_neighbourhood_gradient3D(spes[[tissue_structure]],
+                                                             reference_cell_type = "A",
+                                                             target_cell_types = c("A", "B"),
+                                                             radii = seq(10, 100, 10),
+                                                             feature_colname = "Cell.Type",
+                                                             plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "neighourhood_entropy_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_neighbourhood_entropy_gradient3D(spes[[tissue_structure]],
+                                                            reference_cell_type = "A",
+                                                            target_cell_types = c("A", "B"),
+                                                            radii = seq(10, 100, 10),
+                                                            feature_colname = "Cell.Type",
+                                                            plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "cross_K_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_cross_K_gradient3D(spes[[tissue_structure]],
+                                              reference_cell_type = "A",
+                                              target_cell_types = c("A", "B"),
+                                              radii = seq(10, 100, 10),
+                                              feature_colname = "Cell.Type",
+                                              plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "cross_L_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_cross_L_gradient3D(spes[[tissue_structure]],
+                                              reference_cell_type = "A",
+                                              target_cell_types = c("A", "B"),
+                                              radii = seq(10, 100, 10),
+                                              feature_colname = "Cell.Type",
+                                              plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "cross_G_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_cross_G_gradient3D(spes[[tissue_structure]],
+                                              reference_cell_type = "A",
+                                              target_cell_type = "B",
+                                              radii = seq(10, 100, 10),
+                                              feature_colname = "Cell.Type",
+                                              plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "mixing_scores_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
+                                                    reference_cell_type = "A",
+                                                    target_cell_type = "B",
+                                                    radii = seq(10, 100, 10),
+                                                    feature_colname = "Cell.Type",
+                                                    plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "cell_proportion_grid_metrics") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_cell_proportion_grid_metrics3D(spes[[tissue_structure]],
+                                                          n_splits = 10,
+                                                          reference_cell_types = "A",
+                                                          target_cell_types = "B",
+                                                          feature_colname = "Cell.Type",
+                                                          plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "entropy_grid_metrics") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_entropy_grid_metrics3D(spes[[tissue_structure]],
+                                                  n_splits = 10,
+                                                  cell_types_of_interest = c("A", "B"),
+                                                  feature_colname = "Cell.Type",
+                                                  plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "spatial_autocorrelation") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      proportion_grid_metrics <- SPIAT3D::calculate_cell_proportion_grid_metrics3D(spes[[tissue_structure]],
+                                                                                   n_splits = 10,
+                                                                                   reference_cell_types = "A",
+                                                                                   target_cell_types = "B",
+                                                                                   feature_colname = "Cell.Type",
+                                                                                   plot_image = FALSE)
+      
+      mark(
+        SPIAT3D::calculate_spatial_autocorrelation(grid_metrics = proportion_grid_metrics,
+                                                   metric_colname = "proportion",
+                                                   weight_method = "queen"),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "prevalence_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      proportion_grid_metrics <- SPIAT3D::calculate_cell_proportion_grid_metrics3D(spes[[tissue_structure]],
+                                                                                   n_splits = 10,
+                                                                                   reference_cell_types = "A",
+                                                                                   target_cell_types = "B",
+                                                                                   feature_colname = "Cell.Type",
+                                                                                   plot_image = FALSE)
+      
+      mark(
+        SPIAT3D::calculate_prevalence_gradient3D(grid_metrics = proportion_grid_metrics,
+                                                 metric_colname = "proportion",
+                                                 show_AUC = F,
+                                                 plot_image = F),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else {
+    stop("Metric unknown")
+  }
   
+  # Combine results
+  df <- map2_dfr(results, tissue_structures, ~{
+    tibble(
+      tissue_structures = .y,
+      median_time = as.numeric(.x$median),      # seconds
+      mem_alloc = as.numeric(.x$mem_alloc)      # bytes
+    )
+  })
+  
+  # Runtime plot
+  p_runtime <- ggplot(df, aes(tissue_structures, median_time)) +
+    geom_point(size = 3) +
+    labs(
+      x = "Tissue structure",
+      y = "Median runtime (s)"
+    ) +
+    theme_minimal() +
+    scale_x_discrete(
+      labels = c(
+        "empty_background" = "EB",
+        "mixed_background" = "MB",
+        "mixed_ellipsoid" = "ME",
+        "ringed_ellipsoid" = "RE",
+        "separated_ellipsoid" = "SE",
+        "mixed_network" = "MN",
+        "ringed_network" = "RN",
+        "separated_network" = "SN"
+      )
+    )
+  
+  # Memory plot
+  p_memory <- ggplot(df, aes(tissue_structures, mem_alloc / 1024^2)) +
+    geom_point(size = 3) +
+    labs(
+      x = "Tissue structure",
+      y = "Memory allocated (MB)"
+    ) +
+    theme_minimal() +
+    scale_x_discrete(
+      labels = c(
+        "empty_background" = "EB",
+        "mixed_background" = "MB",
+        "mixed_ellipsoid" = "ME",
+        "ringed_ellipsoid" = "RE",
+        "separated_ellipsoid" = "SE",
+        "mixed_network" = "MN",
+        "ringed_network" = "RN",
+        "separated_network" = "SN"
+      )
+    )
+  
+  # Side-by-side
+  fig <- plot_grid(
+    p_runtime,
+    p_memory,
+    ncol = 2,
+    align = "hv"
+  )
+  
+  plots[[metric]] <- fig 
 }
 
-results <- lapply(tissue_structures, function(tissue_structure) {
 
-  mark(
-    SPIAT3D::calculate_minimum_distances_between_cell_types3D(spes[[tissue_structure]],
-                                                              cell_types_of_interest = NULL,
-                                                              feature_colname = "Cell.Type",
-                                                              show_summary = FALSE,
-                                                              plot_image = FALSE),
-    iterations = 1,
-    check = F
-  )
-  
-})
+pdf("~/R/plots/SPIAT3D_testing.pdf", width = 8, height = 6)
 
-# Combine results
-df <- map2_dfr(results, tissue_structures, ~{
-  tibble(
-    tissue_structures = .y,
-    median_time = as.numeric(.x$median),      # seconds
-    mem_alloc = as.numeric(.x$mem_alloc)      # bytes
-  )
-})
+for (fig in plots) {
+  print(fig)  
+}
 
-# Runtime plot
-p_runtime <- ggplot(df, aes(tissue_structures, median_time)) +
-  geom_point(size = 3) +
-  labs(
-    x = "Tissue structure",
-    y = "Median runtime (s)"
-  ) +
-  theme_minimal() +
-  scale_x_discrete(
-    labels = c(
-      "empty_background" = "EB",
-      "mixed_background" = "MB",
-      "mixed_ellipsoid" = "ME",
-      "ringed_ellipsoid" = "RE",
-      "separated_ellipsoid" = "SE",
-      "mixed_network" = "MN",
-      "ringed_network" = "RN",
-      "separated_network" = "SN"
-    )
-  )
+dev.off()
 
-# Memory plot
-p_memory <- ggplot(df, aes(tissue_structures, mem_alloc / 1024^2)) +
-  geom_point(size = 3) +
-  labs(
-    x = "Tissue structure",
-    y = "Memory allocated (MB)"
-  ) +
-  theme_minimal() +
-  scale_x_discrete(
-    labels = c(
-      "empty_background" = "EB",
-      "mixed_background" = "MB",
-      "mixed_ellipsoid" = "ME",
-      "ringed_ellipsoid" = "RE",
-      "separated_ellipsoid" = "SE",
-      "mixed_network" = "MN",
-      "ringed_network" = "RN",
-      "separated_network" = "SN"
-    )
-  )
-
-# Side-by-side
-fig <- plot_grid(
-  p_runtime,
-  p_memory,
-  ncol = 2,
-  align = "hv"
-)
-
-methods::show(fig)
 
 
