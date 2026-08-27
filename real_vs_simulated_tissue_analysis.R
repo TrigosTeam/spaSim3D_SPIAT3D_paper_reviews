@@ -776,7 +776,7 @@ SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.X.Position"] <- 
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] * 16
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] * 10
 
-plot_cells3D(mouse_embryo_sim_spe,
+plot_cells3D(mouse_embryo_sim_spe[ , sample.int(ncol(mouse_embryo_sim_spe), size = 10000, replace = TRUE)],
              feature_colname = "Cell.Type",
              plot_cell_types = mouse_embryo_cells,
              plot_colours = c(
