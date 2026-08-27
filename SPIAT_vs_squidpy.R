@@ -2,6 +2,10 @@
 # Set seed for consistency
 set.seed(678999821)
 
+library(spaSim3D)
+library(SpatialExperiment)
+library(dplyr)
+library(ggplot2)
 
 # Functions -----
 # Generate data frame containing values of important parameters
@@ -378,9 +382,9 @@ analyse_SD1_simulations <- function(parameters_df) {
     
     spe3D <- simulate_spe_metadata3D(simulation_metadata, plot_image = F)
     
-    spe2D <- spe3D[ , 145 < spatialCoords(spe3D)[ , "Cell.Z.Position"] & spatialCoords(spe3D)[ , "Cell.Z.Position"] < 155]
+    spe2D <- spe3D[ , 145 < SpatialExperiment::spatialCoords(spe3D)[ , "Cell.Z.Position"] & SpatialExperiment::spatialCoords(spe3D)[ , "Cell.Z.Position"] < 155]
     
-    spe_list[[paste("sim", simulation_index, sep = "_")]] <- data.frame(spatialCoords(spe2D), "Cell.Type" = spe2D[["Cell.Type"]])
+    spe_list[[paste("sim", simulation_index, sep = "_")]] <- data.frame(SpatialExperiment::spatialCoords(spe2D), "Cell.Type" = spe2D[["Cell.Type"]])
     
     # Analyse spes
     metric_df_list <- analyse_simulation2D(spe2D,
