@@ -881,6 +881,9 @@ metric_df_lists <- list(
   "mouse_embryo" = mouse_embryo_metric_df_list
 )
 
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "COO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
+             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+
 plot_df <- data.frame()
 for (metric in metrics) {
   
@@ -946,12 +949,20 @@ cor_df <- plot_df %>%
 
 print(cor_df)
 
+
+library(ggh4x)
+
 fig <- ggplot(plot_df, aes(real, sim)) +
   geom_point() +
-  geom_abline(intercept = 0, slope = 1,
-              linetype = "dashed", color = "red") +
-  facet_grid(metric ~ dataset, 
-             scales = "free") +
+  geom_abline(
+    intercept = 0, slope = 1,
+    linetype = "dashed", color = "red"
+  ) +
+  facet_grid2(
+    metric ~ dataset,
+    scales = "free",
+    independent = "all"
+  ) +
   geom_text(
     data = cor_df,
     aes(x = x, y = y, label = label),
@@ -960,4 +971,4 @@ fig <- ggplot(plot_df, aes(real, sim)) +
     vjust = -0.5
   )
 
-methods::show(fig)  
+methods::show(fig)
