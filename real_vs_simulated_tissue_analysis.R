@@ -972,3 +972,9 @@ fig <- ggplot(plot_df, aes(real, sim)) +
   )
 
 methods::show(fig)
+
+
+setwd("~/R/plots")
+pdf("real_vs_simulated_tissue_analysis.pdf", width = 7, height = 20)
+print(fig)
+dev.off()
