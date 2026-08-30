@@ -64,7 +64,7 @@ library(spaSim3D)
 library(SPIAT3D)
 
 
-# Testing calculate_minimum_distances_between_cell_types3D with increasing number of cells ----
+# 1. Testing calculate_minimum_distances_between_cell_types3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -93,9 +93,9 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+df <- plot_results_n_cells(results, n_cells)
 
-# Testing calculate_neighbourhood_counts_gradient3D with increasing number of cells ----
+# 2. Testing calculate_neighbourhood_counts_gradient3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -125,9 +125,9 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+df <- plot_results_n_cells(results, n_cells)
 
-# Testing calculate_co_occurrence_gradient3D with increasing number of cells ----
+# 3. Testing calculate_co_occurrence_gradient3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -157,10 +157,10 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+df <- plot_results_n_cells(results, n_cells)
 
 
-# Testing calculate_cell_proportion_grid_metrics3D with increasing number of cells ----
+# 4. Testing calculate_cell_proportion_grid_metrics3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -190,10 +190,10 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+df <- plot_results_n_cells(results, n_cells)
 
 
-# Testing calculate_prevalence_gradient3D with increasing number of cells ----
+# 5. Testing calculate_prevalence_gradient3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -228,11 +228,11 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+df <- plot_results_n_cells(results, n_cells)
 
 
 
-# Testing calculate_spatial_autocorrelation3D with increasing number of cells ----
+# 6. Testing calculate_spatial_autocorrelation3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -266,11 +266,11 @@ results <- lapply(n_cells, function(n) {
   
 })
 
-plot_results_n_cells(results, n_cells)
+df <- plot_results_n_cells(results, n_cells)
 
 
 
-# Testing calculate_neighbourhood_counts_gradient3D with increasing number of radii values ----
+# 7. Testing calculate_neighbourhood_counts_gradient3D with increasing number of radii values ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
@@ -340,7 +340,7 @@ fig <- plot_grid(
 methods::show(fig)
 
 
-# Testing calculate_cell_proportion_grid_metrics3D with increasing number of splits ----
+# 8. Testing calculate_cell_proportion_grid_metrics3D with increasing number of splits ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
@@ -408,7 +408,7 @@ fig <- plot_grid(
 )
 
 methods::show(fig)
-# Testing calculate_minimum_distances_between_cell_types3D with increasing number of cell type comparisons ----
+# 9. Testing calculate_minimum_distances_between_cell_types3D with increasing number of cell type comparisons ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
@@ -478,7 +478,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
-# Testing calculate_neighbourhood_counts_gradient3D with increasing number of cell type comparisons ----
+# 10 Testing calculate_neighbourhood_counts_gradient3D with increasing number of cell type comparisons ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
@@ -550,7 +550,7 @@ fig <- plot_grid(
 methods::show(fig)
 
 
-# Testing all SPIAT3D functions with empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
+# 11. Testing all SPIAT3D functions with empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
