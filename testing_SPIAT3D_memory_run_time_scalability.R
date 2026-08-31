@@ -145,12 +145,12 @@ results <- lapply(n_cells, function(n) {
                                                       plot_image = FALSE)
   
   mark(
-    SPIAT3D::calculate_co_occurrence3D(background_spe,
-                                       reference_cell_type = "A",
-                                       target_cell_types = c("A", "B"),
-                                       radii = seq(10, 100, 10),
-                                       feature_colname = "Cell.Type",
-                                       plot_image = FALSE),
+    SPIAT3D::calculate_co_occurrence_gradient3D(background_spe,
+                                                reference_cell_type = "A",
+                                                target_cell_types = c("A", "B"),
+                                                radii = seq(10, 100, 10),
+                                                feature_colname = "Cell.Type",
+                                                plot_image = FALSE),
     iterations = 10,
     check = F
   )
