@@ -689,6 +689,7 @@ for (tissue_structure in tissue_structures) {
   spes[[tissue_structure]] <- simulate_spe_metadata3D(cluster_metadata, plot_image = F)
 }
 
+dfs <- list()
 plots <- list()
 
 metrics <- c(
@@ -700,6 +701,7 @@ metrics <- c(
   "cross_L_gradient",
   "cross_G_gradient",
   "mixing_scores_gradient",
+  "co_occurrence_gradient",
   "cell_proportion_grid_metrics",
   "entropy_grid_metrics",
   "spatial_autocorrelation",
@@ -823,6 +825,22 @@ for (metric in metrics) {
       
       mark(
         SPIAT3D::calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
+                                                    reference_cell_type = "A",
+                                                    target_cell_type = "B",
+                                                    radii = seq(10, 100, 10),
+                                                    feature_colname = "Cell.Type",
+                                                    plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "co_occurrence_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        SPIAT3D::calculate_co_occurrence_gradient3D(spes[[tissue_structure]],
                                                     reference_cell_type = "A",
                                                     target_cell_type = "B",
                                                     radii = seq(10, 100, 10),
@@ -969,6 +987,7 @@ for (metric in metrics) {
     align = "hv"
   )
   
+  dfs[[metric]] <- df
   plots[[metric]] <- fig 
 }
 
