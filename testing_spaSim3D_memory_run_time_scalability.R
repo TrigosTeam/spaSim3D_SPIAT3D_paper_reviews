@@ -551,7 +551,7 @@ plots[[7]] <- fig
 
 # 8. Testing simulating empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
-background_metadata$background$n_cells <- 1e5
+background_metadata$background$n_cells <- 1e6
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
 background_metadata$background$height <- 100
@@ -755,3 +755,12 @@ fig <- plot_grid(
 methods::show(fig)
 
 plots[[8]] <- fig
+
+ 
+# Save all plots ----
+setwd("~/R/plots/spaSim3D_testing")
+pdf("figs.pdf", width = 6, height = 3)
+for (i in seq(length(plots))) {
+  print(plots[[i]])
+}
+dev.off() 
