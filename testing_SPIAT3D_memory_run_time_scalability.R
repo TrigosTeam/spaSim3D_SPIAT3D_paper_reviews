@@ -552,7 +552,7 @@ methods::show(fig)
 
 # 11. Testing all SPIAT3D functions with empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
-background_metadata$background$n_cells <- 1e4
+background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
 background_metadata$background$height <- 100
@@ -896,9 +896,9 @@ for (metric in metrics) {
                                                                                    plot_image = FALSE)
       
       mark(
-        SPIAT3D::calculate_spatial_autocorrelation(grid_metrics = proportion_grid_metrics,
-                                                   metric_colname = "proportion",
-                                                   weight_method = "queen"),
+        SPIAT3D::calculate_spatial_autocorrelation3D(grid_metrics = proportion_grid_metrics,
+                                                     metric_colname = "proportion",
+                                                     weight_method = "queen"),
         iterations = 1,
         check = F
       )
@@ -994,7 +994,7 @@ for (metric in metrics) {
 }
 
 
-pdf("~/R/plots/SPIAT3D_testing.pdf", width = 8, height = 6)
+pdf("~/R/plots/SPIAT3D_testing.pdf", width = 8, height = 4)
 
 for (fig in plots) {
   print(fig)  
