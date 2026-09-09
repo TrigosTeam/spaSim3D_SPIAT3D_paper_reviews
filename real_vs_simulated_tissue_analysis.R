@@ -940,7 +940,7 @@ cor_df <- plot_df %>%
   group_by(metric, dataset) %>%
   filter(is.finite(real), is.finite(sim)) %>%
   summarise(
-    r = cor(real, sim),
+    r = cor(real, sim, method = "pearson"),
     x = Inf,
     y = -Inf,
     .groups = "drop"
