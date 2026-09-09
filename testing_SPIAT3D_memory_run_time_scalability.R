@@ -552,7 +552,7 @@ methods::show(fig)
 
 # 11. Testing all SPIAT3D functions with empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
-background_metadata$background$n_cells <- 1e5
+background_metadata$background$n_cells <- 1e4
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
 background_metadata$background$height <- 100
@@ -562,7 +562,6 @@ background_metadata$background$cell_proportions <- 1
 
 tissue_structures <- 
   c(
-    "empty_background",
     "mixed_background",
     "mixed_ellipsoid",
     "ringed_ellipsoid",
@@ -628,11 +627,11 @@ for (tissue_structure in tissue_structures) {
     cluster_metadata$cluster_1$centre_loc <- c(30, 30, 30)
     cluster_metadata$cluster_1$axes_rotation <- runif(3, 0, 180)
     
-    cluster_metadata$cluster_1$cluster_cell_types <- "B"
-    cluster_metadata$cluster_1$cluster_cell_proportions <- 1
-    cluster_metadata$cluster_1$radii <- c(20, 30, 40)
-    cluster_metadata$cluster_1$centre_loc <- c(70, 70, 70)
-    cluster_metadata$cluster_1$axes_rotation <- runif(3, 0, 180)
+    cluster_metadata$cluster_2$cluster_cell_types <- "B"
+    cluster_metadata$cluster_2$cluster_cell_proportions <- 1
+    cluster_metadata$cluster_2$radii <- c(20, 30, 40)
+    cluster_metadata$cluster_2$centre_loc <- c(70, 70, 70)
+    cluster_metadata$cluster_2$axes_rotation <- runif(3, 0, 180)
     
   }
   else if (tissue_structure == "mixed_network") {
@@ -676,11 +675,11 @@ for (tissue_structure in tissue_structures) {
     cluster_metadata$cluster_1$centre_loc <- c(30, 30, 30)
     cluster_metadata$cluster_1$width <- 5
     
-    cluster_metadata$cluster_1$cluster_cell_types <- "B"
-    cluster_metadata$cluster_1$cluster_cell_proportions <- 1
-    cluster_metadata$cluster_1$radius <- 50
-    cluster_metadata$cluster_1$centre_loc <- c(70, 70, 70)
-    cluster_metadata$cluster_1$width <- 5
+    cluster_metadata$cluster_2$cluster_cell_types <- "B"
+    cluster_metadata$cluster_2$cluster_cell_proportions <- 1
+    cluster_metadata$cluster_2$radius <- 50
+    cluster_metadata$cluster_2$centre_loc <- c(70, 70, 70)
+    cluster_metadata$cluster_2$width <- 5
   }
   else {
     stop("tissue structure not found")
@@ -709,6 +708,9 @@ metrics <- c(
 )
 
 for (metric in metrics) {
+  
+  print(metric)
+  
   if (metric == "minimum_distances_between_cells") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
