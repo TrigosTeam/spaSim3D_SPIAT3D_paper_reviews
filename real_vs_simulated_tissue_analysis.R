@@ -952,6 +952,28 @@ print(cor_df)
 
 library(ggh4x)
 
+dataset_naming <- c(
+  "drosphilia_egg" = "Drosphilla egg",
+  "mouse_hypothalamus" = "Mouse hypothalamus",
+  "mouse_embryo" = "Mouse embryo"
+)
+metric_naming <- c(
+  "AMD" = "AMD",
+  "MS_AUC" = "MS",
+  "NMS_AUC" = "NMS",
+  "CK_AUC" = "CK",
+  "CL_AUC"= "CL",
+  "CG_AUC" = "CG",
+  "COO_AUC" = "COO",
+  "ANC_AUC" = "ANC",
+  "ANE_AUC" = "ANE",
+  "ACIN_AUC" = "ACIN",
+  "PBSAC" = "PBSAC",
+  "PBP_AUC" = "PBP",
+  "EBSAC" = "EBSAC",
+  "EBP_AUC" = "EBP"
+)
+
 fig <- ggplot(plot_df, aes(real, sim)) +
   geom_point() +
   geom_abline(
@@ -961,7 +983,11 @@ fig <- ggplot(plot_df, aes(real, sim)) +
   facet_grid2(
     metric ~ dataset,
     scales = "free",
-    independent = "all"
+    independent = "all",
+    labeller = labeller(
+      dataset = dataset_naming,
+      metric = metric_naming
+    )
   ) +
   geom_text(
     data = cor_df,
@@ -969,7 +995,9 @@ fig <- ggplot(plot_df, aes(real, sim)) +
     inherit.aes = FALSE,
     hjust = 1.1,
     vjust = -0.5
-  )
+  ) +
+  theme_minimal() +
+  labs(x = "Real tissue data", y = "Simulated tissue data")
 
 methods::show(fig)
 
