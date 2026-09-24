@@ -420,8 +420,7 @@ analyse_simulated_set <- function(simulation_metadata_for_simulated_group1,
                                                            reference_cell_type,
                                                            cell_types,
                                                            radii,
-                                                           feature_colname = "Cell.Type",
-                                                           plot_image = F)
+                                                           feature_colname = "Cell.Type")
       
       for (target_cell_type in cell_types) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
@@ -575,8 +574,7 @@ analyse_simulated_set <- function(simulation_metadata_for_simulated_group1,
                                                            reference_cell_type,
                                                            cell_types,
                                                            radii,
-                                                           feature_colname = "Cell.Type",
-                                                           plot_image = F)
+                                                           feature_colname = "Cell.Type")
       
       for (target_cell_type in cell_types) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
