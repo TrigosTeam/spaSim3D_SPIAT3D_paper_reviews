@@ -426,14 +426,14 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
     AMD_df <- data.frame(matrix(nrow = n_simulations * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
-    # Define MS, NMS, ANC, ACIN, COO, ANE data frames as well as constants
+    # Define MS, NMS, ANC, ACIN, FCO, ANE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
     MS_df_colnames <- c("simulation", "reference", "target", radii_colnames)
     MS_df <- data.frame(matrix(nrow = n_simulations * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- COO_df <- CK_df <- CL_df <- CG_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- FCO_df <- CK_df <- CL_df <- CG_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -462,7 +462,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
                            ACIN = ACIN_df,
                            ANE = ANE_df,
                            ANC = ANC_df,
-                           COO = COO_df,
+                           FCO = FCO_df,
                            CK = CK_df,
                            CL = CL_df,
                            CG = CG_df,
@@ -488,14 +488,14 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
     AMD_df <- data.frame(matrix(nrow = n_simulations * n_slices * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
-    # Define MS, NMS, ANC, ACIN, COO, ANE data frames as well as constants
+    # Define MS, NMS, ANC, ACIN, FCO, ANE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
     MS_df_colnames <- c("simulation", "slice", "reference", "target", radii_colnames)
     MS_df <- data.frame(matrix(nrow = n_simulations * n_slices * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- COO_df <- CK_df <- CL_df <- CG_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- FCO_df <- CK_df <- CL_df <- CG_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -527,7 +527,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
                            CK = CK_df,
                            CL = CL_df,
                            CG = CG_df,
-                           COO = COO_df,
+                           FCO = FCO_df,
                            PBSAC = PBSAC_df,
                            PBP = PBP_df,
                            EBSAC = EBSAC_df,
@@ -578,7 +578,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
         metric_df_list[["ANC"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["ACIN"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["FCO"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CK"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CL"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CG"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
@@ -590,7 +590,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
         
         if (is.null(gradient_data)) {
           metric_df_list[["ANC"]][pair_index, radii_colnames] <- NA
-          metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["FCO"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CK"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CL"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CG"]][pair_index, radii_colnames] <- NA
@@ -601,7 +601,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
         }
         else {
           metric_df_list[["ANC"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_counts"]][[target_cell_type]]
-          metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+          metric_df_list[["FCO"]][pair_index, radii_colnames] <- gradient_data[["fast_co_occurrence"]][[target_cell_type]]
           metric_df_list[["CK"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] - gradient_data[["cross_K"]][["expected"]]
           metric_df_list[["CL"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] - gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["CG"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] - gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
@@ -737,7 +737,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
           print(paste(reference_cell_type, target_cell_type, sep = "/"))
           metric_df_list[["ANC"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
           metric_df_list[["ACIN"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
-          metric_df_list[["COO"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
+          metric_df_list[["FCO"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
           metric_df_list[["CK"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
           metric_df_list[["CL"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
           metric_df_list[["CG"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
@@ -749,7 +749,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
           
           if (is.null(gradient_data)) {
             metric_df_list[["ANC"]][pair_index, radii_colnames] <- NA
-            metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["FCO"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CK"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CL"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CG"]][pair_index, radii_colnames] <- NA
@@ -760,7 +760,7 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
           }
           else {
             metric_df_list[["ANC"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_counts"]][[target_cell_type]]
-            metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+            metric_df_list[["FCO"]][pair_index, radii_colnames] <- gradient_data[["fast_co_occurrence"]][[target_cell_type]]
             metric_df_list[["CK"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] - gradient_data[["cross_K"]][["expected"]]
             metric_df_list[["CL"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] - gradient_data[["cross_L"]][["expected"]]
             metric_df_list[["CG"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] - gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
@@ -894,12 +894,12 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
   }
   
   add_AUC_for_radii_gradient_metrics_to_metric_df_list3D <- function(metric_df_list) {
-    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "COO", "CK", "CL", "CG")
+    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "FCO", "CK", "CL", "CG")
     
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
-      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "COO", "CK", "CL", "CG")) {
+      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "FCO", "CK", "CL", "CG")) {
         subset_colnames <- c("simulation", "reference", "target", metric_AUC_name)
       }
       else {
@@ -931,12 +931,12 @@ analyse_SD2_simulations <- function(parameters_df, background_type) {
     return(metric_df_list)
   }
   add_AUC_for_radii_gradient_metrics_to_metric_df_list2D <- function(metric_df_list) {
-    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "COO", "CK", "CL", "CG")
+    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "FCO", "CK", "CL", "CG")
     
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
-      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "COO", "CK", "CL", "CG")) {
+      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "FCO", "CK", "CL", "CG")) {
         subset_colnames <- c("simulation", "slice", "reference", "target", metric_AUC_name)
       }
       else {
@@ -1727,7 +1727,7 @@ metrics <- c("AMD",
              "ANC_AUC", "ACIN_AUC", "ANE_AUC",
              "MS_AUC", "NMS_AUC",
              "CK_AUC", "CL_AUC", "CG_AUC",
-             "COO_AUC",
+             "FCO_AUC",
              "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 

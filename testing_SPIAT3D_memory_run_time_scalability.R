@@ -127,7 +127,7 @@ results <- lapply(n_cells, function(n) {
 
 df <- plot_results_n_cells(results, n_cells)
 
-# 3. Testing calculate_co_occurrence_gradient3D with increasing number of cells ----
+# 3. Testing calculate_fast_co_occurrence_gradient3D with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5)
 
 background_metadata <- spaSim3D::spe_metadata_background_template("random")
@@ -145,12 +145,12 @@ results <- lapply(n_cells, function(n) {
                                                       plot_image = FALSE)
   
   mark(
-    SPIAT3D::calculate_co_occurrence_gradient3D(background_spe,
-                                                reference_cell_type = "A",
-                                                target_cell_types = c("A", "B"),
-                                                radii = seq(10, 100, 10),
-                                                feature_colname = "Cell.Type",
-                                                plot_image = FALSE),
+    SPIAT3D::calculate_fast_co_occurrence_gradient3D(background_spe,
+                                                     reference_cell_type = "A",
+                                                     target_cell_types = c("A", "B"),
+                                                     radii = seq(10, 100, 10),
+                                                     feature_colname = "Cell.Type",
+                                                     plot_image = FALSE),
     iterations = 10,
     check = F
   )
@@ -700,7 +700,7 @@ metrics <- c(
   "cross_L_gradient",
   "cross_G_gradient",
   "mixing_scores_gradient",
-  "co_occurrence_gradient",
+  "fast_co_occurrence_gradient",
   "cell_proportion_grid_metrics",
   "entropy_grid_metrics",
   "spatial_autocorrelation",
@@ -838,16 +838,16 @@ for (metric in metrics) {
       
     })
   }
-  else if (metric == "co_occurrence_gradient") {
+  else if (metric == "fast_co_occurrence_gradient") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_co_occurrence_gradient3D(spes[[tissue_structure]],
-                                                    reference_cell_type = "A",
-                                                    target_cell_type = "B",
-                                                    radii = seq(10, 100, 10),
-                                                    feature_colname = "Cell.Type",
-                                                    plot_image = FALSE),
+        SPIAT3D::calculate_fast_co_occurrence_gradient3D(spes[[tissue_structure]],
+                                                         reference_cell_type = "A",
+                                                         target_cell_type = "B",
+                                                         radii = seq(10, 100, 10),
+                                                         feature_colname = "Cell.Type",
+                                                         plot_image = FALSE),
         iterations = 1,
         check = F
       )
