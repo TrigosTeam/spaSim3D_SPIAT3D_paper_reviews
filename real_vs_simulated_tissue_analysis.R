@@ -776,7 +776,7 @@ drosphilia_egg_metric_df_list <-
   )
 
 
-# saveRDS(drosphilia_egg_metric_df_list, "~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
+saveRDS(drosphilia_egg_metric_df_list, "~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
 drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
 
 metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
@@ -940,7 +940,7 @@ mouse_embryo_metric_df_list <-
   )
 
 
-# saveRDS(mouse_embryo_metric_df_list, "~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
+saveRDS(mouse_embryo_metric_df_list, "~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
 mouse_embryo_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
 
 metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
