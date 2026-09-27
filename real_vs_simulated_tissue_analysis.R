@@ -1,21 +1,102 @@
-library(spaSim3D)
-library(SPIAT3D)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
 # Functions ----
-convert_df_to_spe <- function(df) {
-  spe <- SpatialExperiment::SpatialExperiment(
-    assay = matrix(data = NA, nrow = 0, ncol = nrow(df)),
-    colData = df,
-    spatialCoordsNames = c("Cell.X.Position", "Cell.Y.Position", "Cell.Z.Position"))
+convert_spe_to_df <- function(spe, feature_colname) {
   
-  return(spe)
+  df <- data.frame(spatialCoords(spe), Cell.Type = spe[[feature_colname]])
+  
+  return(df)
 }
 
+plot_cells3D <- function(df,
+                         plot_cell_types = NULL,
+                         plot_colours = NULL,
+                         feature_colname = "Cell.Type") {
+  
+  # Check input parameters
+  if (!is.null(plot_cell_types) && !is.character(plot_cell_types)) {
+    stop("`plot_cell_types` is not a character vector or NULL.")
+  }
+  if (!is.null(plot_colours) && !is.character(plot_colours)) {
+    stop("`plot_colours` is not a character vector or NULL.")
+  }
+  if (is.character(plot_colours)) {
+    non_colours <- plot_colours[which(!(sapply(plot_colours, function(X) {
+      tryCatch(is.matrix(col2rgb(X)),
+               error = function(e) FALSE)
+    })))]
+    if (length(non_colours) > 0) {
+      stop(paste("The following plot_colours are not colours:\n   ",
+                 paste(non_colours, collapse = ", ")))
+    }
+  }
+  if (!is.character(feature_colname)) {
+    stop("`feature_colname` is not a character.")
+  }
+  if (is.null(df[[feature_colname]])) {
+    stop(paste(feature_colname, "is not a valid column in your spe object."))
+  }
+  
+  ## If no cell types chosen, use all cell types found in data frame
+  if (is.null(plot_cell_types)) {
+    warning("plot_cell_types not specified, all cell types found in the spe object will be used.")
+    plot_cell_types <- unique(df[["Cell.Type"]])
+  }
+  ## If no colours inputted, use viridis (D) palette
+  if (is.null(plot_colours)) {
+    warning("plot_colours not specified, viridis (D) palette will be used.")
+    plot_colours <- viridis::viridis(n = length(plot_cell_types), option = "D")
+  }
+  ## User inputs mismatching cell types and colours
+  if (length(plot_cell_types) != length(plot_colours)) {
+    stop("Length of plot_cell_types is not equal to length of plot_colours")
+  }
+  
+  ## If cell types have been chosen, check they are found in the spe object
+  spe_cell_types <- unique(df[[feature_colname]])
+  unknown_cell_types <- setdiff(plot_cell_types, spe_cell_types)
+  
+  if (length(unknown_cell_types) == length(plot_cell_types)) {
+    stop("None of the plot_cell_types are found in the spe object")
+  }
+  
+  if (length(unknown_cell_types) != 0) {
+    warning(paste("The following plot_cell_types are not found in the spe object:\n   ",
+                  paste(unknown_cell_types, collapse = ", ")))
+    plot_colours <- plot_colours[which(plot_cell_types %in% spe_cell_types)]
+    plot_cell_types <- intersect(plot_cell_types, spe_cell_types)
+  }
+  
+  ## Factor for feature column
+  df[, "Cell.Type"] <- factor(df[, "Cell.Type"],
+                              levels = plot_cell_types)
+  
+  ## Plot
+  fig <- plotly::plot_ly(df,
+                         type = "scatter3d",
+                         mode = 'markers',
+                         x = ~Cell.X.Position,
+                         y = ~Cell.Y.Position,
+                         z = ~Cell.Z.Position,
+                         color = ~Cell.Type,
+                         colors = plot_colours,
+                         marker = list(size = 2))
+  
+  fig <- plotly::layout(fig, scene = list(xaxis = list(title = 'x', showgrid = T, showaxeslabels = F, showticklabels = T, gridwidth = 5,
+                                                       titlefont = list(size = 20), tickfont = list(size = 15)),
+                                          yaxis = list(title = 'y', showgrid = T, showaxeslabels = F, showticklabels = T, gridwidth = 5,
+                                                       titlefont = list(size = 20), tickfont = list(size = 15)),
+                                          zaxis = list(title = 'z', showgrid = T, showaxeslabels = F, showticklabels = T, gridwidth = 5,
+                                                       titlefont = list(size = 20), tickfont = list(size = 15))))
+  
+  return(fig)
+}
+
+
 analyse_3D_data_real_and_sim <- function(
-    data3D_real_spe,
-    data3D_sim_spe,
+    data3D_real_df,
+    data3D_sim_df,
     cell_types,
     radii = seq(20, 100, 10),
     n_splits = 10,
@@ -97,18 +178,18 @@ analyse_3D_data_real_and_sim <- function(
     print(i)
     
     if (i == 1) {
-      spe <- data3D_real_spe
+      df <- data3D_real_df
       data_type <- "real"
     }
     else if (i == 2) {
-      spe <- data3D_sim_spe
+      df <- data3D_sim_df
       data_type <- "sim"
     }
     
     ### 3D analysis -----------------------------
     index <- n_cell_type_combinations * (i - 1) + 1 
     
-    minimum_distance_data <- calculate_minimum_distances_between_cell_types3D(spe,
+    minimum_distance_data <- calculate_minimum_distances_between_cell_types3D(df,
                                                                               cell_types,
                                                                               feature_colname = "Cell.Type",
                                                                               show_summary = F,
@@ -125,7 +206,7 @@ analyse_3D_data_real_and_sim <- function(
     pair_index <- n_cell_type_combinations * (i - 1) + 1 
     
     for (reference_cell_type in cell_types) {
-      gradient_data <- calculate_all_gradient_cc_metrics3D(spe,
+      gradient_data <- calculate_all_gradient_cc_metrics3D(df,
                                                            reference_cell_type,
                                                            cell_types,
                                                            radii,
@@ -185,7 +266,7 @@ analyse_3D_data_real_and_sim <- function(
         metric_df_list[["EBP"]][pair_index, c("cell_types", "data_type")] <- c(paste(reference_cell_type, target_cell_type, sep = ","), data_type)
         
         if (reference_cell_type != target_cell_type) {
-          proportion_grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe, 
+          proportion_grid_metrics <- calculate_cell_proportion_grid_metrics3D(df, 
                                                                               n_splits,
                                                                               reference_cell_type, 
                                                                               target_cell_type,
@@ -211,7 +292,7 @@ analyse_3D_data_real_and_sim <- function(
             metric_df_list[["PBP"]][pair_index, thresholds_colnames] <- PBP_df$prevalence
           } 
           
-          entropy_grid_metrics <- calculate_entropy_grid_metrics3D(spe, 
+          entropy_grid_metrics <- calculate_entropy_grid_metrics3D(df, 
                                                                    n_splits,
                                                                    c(reference_cell_type, target_cell_type), 
                                                                    feature_colname = "Cell.Type",
@@ -421,20 +502,17 @@ plot_sim_vs_real_scatterplots <- function(metric_df_list) {
   methods::show(fig)
 }
 
-### 1. Download and simulate mouse hypothalamus ----
+### 1. Download, simulate and analyse mouse hypothalamus ----
 
 # Original
 setwd("/home/dle/R/data3D/merfish_squidpy")
-merfish_squidpy_df <- read.csv("merfish_squidpy_df.csv")
+mouse_hypothalamus_real_df <- read.csv("merfish_squidpy_df.csv")
 
-merfish_squidpy_df$Cell.X.Position <- merfish_squidpy_df$Cell.X.Position * 1.8
-merfish_squidpy_df$Cell.Y.Position <- merfish_squidpy_df$Cell.Y.Position * 1.8
-merfish_squidpy_df$Cell.Z.Position <- ((as.integer(merfish_squidpy_df$Cell.Z.Position) + 29) / 100)
+mouse_hypothalamus_real_df$Cell.X.Position <- mouse_hypothalamus_real_df$Cell.X.Position * 1.8
+mouse_hypothalamus_real_df$Cell.Y.Position <- mouse_hypothalamus_real_df$Cell.Y.Position * 1.8
+mouse_hypothalamus_real_df$Cell.Z.Position <- ((as.integer(mouse_hypothalamus_real_df$Cell.Z.Position) + 29) / 100)
 
-mouse_hypothalamus_real_spe <- convert_df_to_spe(merfish_squidpy_df)
-
-SPIAT3D::plot_cells3D(mouse_hypothalamus_real_spe, feature_colname = "Cell.Type")
-
+plot_cells3D(mouse_hypothalamus_real_df)
 
 # using spaSim-3D
 mouse_hypothalamus_md <- spe_metadata_background_template("random")
@@ -522,36 +600,62 @@ SpatialExperiment::spatialCoords(mouse_hypothalamus_sim_spe)[ , "Cell.X.Position
 SpatialExperiment::spatialCoords(mouse_hypothalamus_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(mouse_hypothalamus_sim_spe)[ , "Cell.Y.Position"] * 1.8 / 100
 SpatialExperiment::spatialCoords(mouse_hypothalamus_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(mouse_hypothalamus_sim_spe)[ , "Cell.Z.Position"] / 100
 
-SPIAT3D::plot_cells3D(mouse_hypothalamus_sim_spe, feature_colname = "Cell.Type")
+mouse_hypothalamus_sim_df <- convert_spe_to_df(mouse_hypothalamus_sim_spe, feature_colname = "Cell.Type")
+rm(mouse_hypothalamus_sim_spe)
+
+plot_cells3D(mouse_hypothalamus_sim_df)
+
+
+# Analysis
+mouse_hypothalamus_real_df$Cell.Type[mouse_hypothalamus_real_df$Cell.Type %in% c("Endothelial 2")] <- "Endothelial"
+mouse_hypothalamus_cell_types <- intersect(mouse_hypothalamus_real_df$Cell.Type, mouse_hypothalamus_sim_df$Cell.Type)
+
+mouse_hypothalamus_metric_df_list <- 
+  analyse_3D_data_real_and_sim(
+    data3D_real_df = mouse_hypothalamus_real_df,
+    data3D_sim_df = mouse_hypothalamus_sim_df,
+    cell_types = mouse_hypothalamus_cell_types,
+    radii = seq(0.2, 1, 0.1),
+    n_splits = 10,
+    thresholds = seq(0.01, 1, 0.01)
+  )
+
+saveRDS(mouse_hypothalamus_metric_df_list, "~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
+mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
+
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
+             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+
+plot_sim_vs_real_scatterplots(mouse_hypothalamus_metric_df_list)
+plot_percentage_difference_vs_metric_boxplots(mouse_hypothalamus_metric_df_list)
 
 
 ### 2. Download and simulate Drosphilia Egg (E16_18h) ----
 # Original
 setwd("/home/dle/R/data3D/stomics_fly")
-E16_18h_df <- read.csv("E16-18h_df.csv")
-E16_18h_df$Cell.X.Position <- E16_18h_df$Cell.X.Position * 10 + 265
-E16_18h_df$Cell.Y.Position <- E16_18h_df$Cell.Y.Position * 10 + 160
-E16_18h_df$Cell.Z.Position <- E16_18h_df$Cell.Z.Position * 10
+drosphilia_egg_real_df <- read.csv("E16-18h_df.csv")
+drosphilia_egg_real_df$Cell.X.Position <- drosphilia_egg_real_df$Cell.X.Position * 10 + 265
+drosphilia_egg_real_df$Cell.Y.Position <- drosphilia_egg_real_df$Cell.Y.Position * 10 + 160
+drosphilia_egg_real_df$Cell.Z.Position <- drosphilia_egg_real_df$Cell.Z.Position * 10
 
-drosphilia_egg_real_spe <- convert_df_to_spe(E16_18h_df)
 
-SPIAT3D::plot_cells3D(drosphilia_egg_real_spe, 
-                      feature_colname = "Cell.Type",
-                      plot_cell_types = 
-                        c("salivary gland", "epidermis", "CNS", "carcass", "fat body",
-                          "muscle", "trachea", "midgut", "hemolymph", "foregut"),
-                      plot_colours = c(
-                        "#33135b",
-                        "#73ec81",
-                        "#9437a8",
-                        "#b8db50",
-                        "#0062c5",
-                        "#f77e3b",
-                        "#48bbff",
-                        "#bb0036",
-                        "#4deeac",
-                        "#770026"
-                      ))
+plot_cells3D(drosphilia_egg_real_df, 
+             feature_colname = "Cell.Type",
+             plot_cell_types = 
+               c("salivary gland", "epidermis", "CNS", "carcass", "fat body",
+                 "muscle", "trachea", "midgut", "hemolymph", "foregut"),
+             plot_colours = c(
+               "#33135b",
+               "#73ec81",
+               "#9437a8",
+               "#b8db50",
+               "#0062c5",
+               "#f77e3b",
+               "#48bbff",
+               "#bb0036",
+               "#4deeac",
+               "#770026"
+             ))
 
 
 # using spasim_3D
@@ -636,7 +740,9 @@ SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.X.Position"] <
 SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Y.Position"] * 4.5
 SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(drosphilia_egg_sim_spe)[ , "Cell.Z.Position"] * 2
 
-plot_cells3D(drosphilia_egg_sim_spe, 
+drosphilia_egg_sim_df <- convert_spe_to_df(drosphilia_egg_sim_spe, feature_colname = "Cell.Type")
+
+plot_cells3D(drosphilia_egg_sim_df, 
              feature_colname = "Cell.Type",
              plot_cell_types = 
                c("salivary gland", "epidermis", "CNS", "carcass", "fat body",
@@ -655,37 +761,59 @@ plot_cells3D(drosphilia_egg_sim_spe,
              ))
 
 
+# Analysis
+drosphilia_egg_cell_types <- intersect(unique(drosphilia_egg_real_df$Cell.Type), 
+                                       unique(drosphilia_egg_sim_df$Cell.Type))
+
+drosphilia_egg_metric_df_list <- 
+  analyse_3D_data_real_and_sim(
+    data3D_real_df = drosphilia_egg_real_df,
+    data3D_sim_df = drosphilia_egg_sim_df,
+    cell_types = drosphilia_egg_cell_types,
+    radii = seq(20, 100, 10),
+    n_splits = 10,
+    thresholds = seq(0.01, 1, 0.01)
+  )
+
+
+# saveRDS(drosphilia_egg_metric_df_list, "~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
+drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
+
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
+             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+
+plot_sim_vs_real_scatterplots(drosphilia_egg_metric_df_list)
+plot_percentage_difference_vs_metric_boxplots(drosphilia_egg_metric_df_list)
+
 
 ### 3. Download and simulate Mouse embryo (E11.5h) ----
 # Original
 setwd("/home/dle/R/data3D/spateo")
-mouse_E11.5_embryo <- read.csv("mouse_E11.5_embryo.csv")
-mouse_E11.5_embryo$Cell.Type[mouse_E11.5_embryo$Cell.Type == ""] <- "Blank"
-mouse_embryo_cells <- names(sort(table(mouse_E11.5_embryo$Cell.Type), decreasing = TRUE))[1:12]
+mouse_embryo_real_df <- read.csv("mouse_E11.5_embryo.csv")
+mouse_embryo_real_df$Cell.Type[mouse_embryo_real_df$Cell.Type == ""] <- "Blank"
+mouse_embryo_cells <- names(sort(table(mouse_embryo_real_df$Cell.Type), decreasing = TRUE))[1:12]
 
-mouse_E11.5_embryo$Cell.X.Position <- mouse_E11.5_embryo$Cell.X.Position - 580
-mouse_E11.5_embryo$Cell.Y.Position <- mouse_E11.5_embryo$Cell.Y.Position - 38
-mouse_E11.5_embryo$Cell.Z.Position <- mouse_E11.5_embryo$Cell.Z.Position - 305
+mouse_embryo_real_df$Cell.X.Position <- mouse_embryo_real_df$Cell.X.Position - 580
+mouse_embryo_real_df$Cell.Y.Position <- mouse_embryo_real_df$Cell.Y.Position - 38
+mouse_embryo_real_df$Cell.Z.Position <- mouse_embryo_real_df$Cell.Z.Position - 305
 
-mouse_embryo_real_spe <- convert_df_to_spe(mouse_E11.5_embryo)
-
-SPIAT3D::plot_cells3D(mouse_embryo_real_spe[ , sample.int(ncol(mouse_embryo_real_spe), size = 10000, replace = TRUE)], 
-                      feature_colname = "Cell.Type",
-                      plot_cell_types = mouse_embryo_cells,
-                      plot_colours = c(
-                        "#33135b",
-                        "#73ec81",
-                        "#9437a8",
-                        "#b8db50",
-                        "#0062c5",
-                        "#f77e3b",
-                        "#48bbff",
-                        "#bb0036",
-                        "#4deeac",
-                        "#770026",
-                        "#007128",
-                        "#d99dff"
-                      ))
+plot_cells3D(mouse_embryo_real_df[sample.int(nrow(mouse_embryo_real_df), size = 10000, replace = TRUE), ], 
+             feature_colname = "Cell.Type",
+             plot_cell_types = mouse_embryo_cells,
+             plot_colours = c(
+               "#33135b",
+               "#73ec81",
+               "#9437a8",
+               "#b8db50",
+               "#0062c5",
+               "#f77e3b",
+               "#48bbff",
+               "#bb0036",
+               "#4deeac",
+               "#770026",
+               "#007128",
+               "#d99dff"
+             ))
 
 
 # using spaSim-3D
@@ -775,7 +903,10 @@ SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.X.Position"] <- 
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Y.Position"] * 16
 SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] <- SpatialExperiment::spatialCoords(mouse_embryo_sim_spe)[ , "Cell.Z.Position"] * 10
 
-plot_cells3D(mouse_embryo_sim_spe[ , sample.int(ncol(mouse_embryo_sim_spe), size = 10000, replace = TRUE)],
+mouse_embryo_sim_df <- convert_spe_to_df(mouse_embryo_sim_spe, feature_colname = "Cell.Type")
+rm(mouse_embryo_sim_spe)
+
+plot_cells3D(mouse_embryo_sim_df[sample.int(nrow(mouse_embryo_sim_df), size = 10000, replace = TRUE), ],
              feature_colname = "Cell.Type",
              plot_cell_types = mouse_embryo_cells,
              plot_colours = c(
@@ -794,65 +925,14 @@ plot_cells3D(mouse_embryo_sim_spe[ , sample.int(ncol(mouse_embryo_sim_spe), size
              ))
 
 
-
-### 4. Analysing and comparing datasets ------
-# Mouse hypothalamus ----
-mouse_hypothalamus_real_spe$Cell.Type[mouse_hypothalamus_real_spe$Cell.Type %in% c("Endothelial 2")] <- "Endothelial"
-mouse_hypothalamus_cell_types <- intersect(mouse_hypothalamus_real_spe$Cell.Type, mouse_hypothalamus_sim_spe$Cell.Type)
-
-mouse_hypothalamus_metric_df_list <- 
-  analyse_3D_data_real_and_sim(
-    data3D_real_spe = mouse_hypothalamus_real_spe,
-    data3D_sim_spe = mouse_hypothalamus_sim_spe,
-    cell_types = mouse_hypothalamus_cell_types,
-    radii = seq(0.2, 1, 0.1),
-    n_splits = 10,
-    thresholds = seq(0.01, 1, 0.01)
-  )
-
-saveRDS(mouse_hypothalamus_metric_df_list, "~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
-mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
-
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
-             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
-
-plot_sim_vs_real_scatterplots(mouse_hypothalamus_metric_df_list)
-plot_percentage_difference_vs_metric_boxplots(mouse_hypothalamus_metric_df_list)
-
-
-# drosphoilia egg ----
-drosphilia_egg_cell_types <- intersect(unique(drosphilia_egg_real_spe$Cell.Type), 
-                                       unique(drosphilia_egg_sim_spe$Cell.Type))
-
-drosphilia_egg_metric_df_list <- 
-  analyse_3D_data_real_and_sim(
-    data3D_real_spe = drosphilia_egg_real_spe,
-    data3D_sim_spe = drosphilia_egg_sim_spe,
-    cell_types = drosphilia_egg_cell_types,
-    radii = seq(20, 100, 10),
-    n_splits = 10,
-    thresholds = seq(0.01, 1, 0.01)
-  )
-
-
-# saveRDS(drosphilia_egg_metric_df_list, "~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
-drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
-
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
-             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
-
-plot_sim_vs_real_scatterplots(drosphilia_egg_metric_df_list)
-plot_percentage_difference_vs_metric_boxplots(drosphilia_egg_metric_df_list)
-
-
-# Mouse embryo -----
-mouse_embryo_cell_types <- intersect(unique(mouse_embryo_real_spe$Cell.Type), 
-                                     unique(mouse_embryo_sim_spe$Cell.Type))
+# Analysis
+mouse_embryo_cell_types <- intersect(unique(mouse_embryo_real_df$Cell.Type), 
+                                     unique(mouse_embryo_sim_df$Cell.Type))
 
 mouse_embryo_metric_df_list <- 
   analyse_3D_data_real_and_sim(
-    data3D_real_spe = mouse_embryo_real_spe,
-    data3D_sim_spe = mouse_embryo_sim_spe,
+    data3D_real_df = mouse_embryo_real_df,
+    data3D_sim_df = mouse_embryo_sim_df,
     cell_types = mouse_embryo_cell_types,
     radii = seq(20, 200, 10),
     n_splits = 10,
@@ -869,7 +949,8 @@ metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC"
 plot_sim_vs_real_scatterplots(mouse_embryo_metric_df_list)
 plot_percentage_difference_vs_metric_boxplots(mouse_embryo_metric_df_list)
 
-# Analysis combining all 3 datasets ----
+
+### 4. Analysis combining all 3 datasets ----
 mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hypothalamus_metric_df_list")
 drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
 mouse_embryo_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
