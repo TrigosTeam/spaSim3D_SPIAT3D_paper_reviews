@@ -564,11 +564,11 @@ tissue_structures <-
   c(
     "mixed_background",
     "mixed_ellipsoid",
-    "ringed_ellipsoid",
     "separated_ellipsoid",
+    "ringed_ellipsoid",
     "mixed_network",
-    "ringed_network",
-    "separated_network"
+    "separated_network",
+    "ringed_network"
   )
 
 spes <- list()
@@ -949,14 +949,13 @@ for (metric in metrics) {
     theme_minimal() +
     scale_x_discrete(
       labels = c(
-        "empty_background" = "EB",
         "mixed_background" = "MB",
         "mixed_ellipsoid" = "ME",
-        "ringed_ellipsoid" = "RE",
         "separated_ellipsoid" = "SE",
+        "ringed_ellipsoid" = "RE",
         "mixed_network" = "MN",
-        "ringed_network" = "RN",
-        "separated_network" = "SN"
+        "separated_network" = "SN",
+        "ringed_network" = "RN"
       )
     )
   
@@ -970,14 +969,13 @@ for (metric in metrics) {
     theme_minimal() +
     scale_x_discrete(
       labels = c(
-        "empty_background" = "EB",
         "mixed_background" = "MB",
         "mixed_ellipsoid" = "ME",
-        "ringed_ellipsoid" = "RE",
         "separated_ellipsoid" = "SE",
+        "ringed_ellipsoid" = "RE",
         "mixed_network" = "MN",
-        "ringed_network" = "RN",
-        "separated_network" = "SN"
+        "separated_network" = "SN",
+        "ringed_network" = "RN"
       )
     )
   
@@ -993,6 +991,7 @@ for (metric in metrics) {
   plots[[metric]] <- fig 
 }
 
+saveRDS(dfs, "~/R/plots?SPIAT3D_testing_dfs.RDS")
 
 pdf("~/R/plots/SPIAT3D_testing.pdf", width = 8, height = 4)
 

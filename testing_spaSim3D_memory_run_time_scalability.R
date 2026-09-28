@@ -14,8 +14,6 @@ library(dplyr)
 library(purrr)
 library(ggplot2)
 library(cowplot)
-library(spaSim3D)
-library(SPIAT3D)
 
 # 1. Testing simulate_random_background_cells3D function with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
@@ -23,7 +21,7 @@ n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 results <- lapply(n_cells, function(n) {
   
   mark(
-    spaSim3D::simulate_random_background_cells3D(n_cells = n,
+    simulate_random_background_cells3D(n_cells = n,
                                                  length = 100,
                                                  width = 100,
                                                  height = 100,
@@ -86,7 +84,7 @@ n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 results <- lapply(n_cells, function(n) {
   
   mark(
-    spaSim3D::simulate_ordered_background_cells3D(n_cells = n,
+    simulate_ordered_background_cells3D(n_cells = n,
                                                   length = 100,
                                                   width = 100,
                                                   height = 100,
@@ -149,7 +147,7 @@ n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 background_spes <- list()
 i <- 1
 for (n in n_cells) {
-  background_spes[[i]] <- spaSim3D::simulate_random_background_cells3D(n_cells = n,
+  background_spes[[i]] <- simulate_random_background_cells3D(n_cells = n,
                                                                        length = 100,
                                                                        width = 100,
                                                                        height = 100,
@@ -164,7 +162,7 @@ indices <- seq_len(length(n_cells))
 results <- lapply(indices, function(index) {
   
   mark(
-    spaSim3D::simulate_clusters3D(background_spes[[index]],
+    simulate_clusters3D(background_spes[[index]],
                                   cluster_properties_list = list(
                                     C1 = list(
                                       shape = "ellipsoid",
@@ -233,7 +231,7 @@ n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 background_spes <- list()
 i <- 1
 for (n in n_cells) {
-  background_spes[[i]] <- spaSim3D::simulate_random_background_cells3D(n_cells = n,
+  background_spes[[i]] <- simulate_random_background_cells3D(n_cells = n,
                                                                        length = 100,
                                                                        width = 100,
                                                                        height = 100,
@@ -247,7 +245,7 @@ indices <- seq_len(length(n_cells))
 results <- lapply(indices, function(index) {
   
   mark(
-    spaSim3D::simulate_clusters3D(background_spes[[index]],
+    simulate_clusters3D(background_spes[[index]],
                                   cluster_properties_list = list(
                                     C1 = list(
                                       shape = "network",
@@ -312,7 +310,7 @@ methods::show(fig)
 plots[[4]] <- fig
 
 # 5. Testing simulating ellipsoid clusters with increasing size of clusters ----
-background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e6,
+background_spe <- simulate_random_background_cells3D(n_cells = 1e6,
                                                                length = 100,
                                                                width = 100,
                                                                height = 100,
@@ -333,7 +331,7 @@ ellipsoid_sizes <- list(
 results <- lapply(ellipsoid_sizes, function(size) {
   
   mark(
-    spaSim3D::simulate_clusters3D(background_spe,
+    simulate_clusters3D(background_spe,
                                   cluster_properties_list = list(
                                     C1 = list(
                                       shape = "ellipsoid",
@@ -393,7 +391,7 @@ methods::show(fig)
 plots[[5]] <- fig
 
 # 6. Testing simulating networks with increasing complexity of networks ----
-background_spe <- spaSim3D::simulate_random_background_cells3D(n_cells = 1e6,
+background_spe <- simulate_random_background_cells3D(n_cells = 1e6,
                                                                length = 100,
                                                                width = 100,
                                                                height = 100,
@@ -407,7 +405,7 @@ network_n_edges <- c(10, 15, 20, 25, 30)
 results <- lapply(network_n_edges, function(n) {
   
   mark(
-    spaSim3D::simulate_clusters3D(background_spe,
+    simulate_clusters3D(background_spe,
                                   cluster_properties_list = list(
                                     C1 = list(
                                       shape = "network",
@@ -468,7 +466,7 @@ methods::show(fig)
 plots[[6]] <- fig
 
 # 7. Testing simulating ellipsoid clusters with increasing number of clusters ----
-background_metadata <- spaSim3D::spe_metadata_background_template("random")
+background_metadata <- spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e6
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
@@ -483,13 +481,13 @@ results <- lapply(n_clusters, function(n) {
   
   for (i in seq_len(n)) {
     if (i == 1) {
-      cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+      cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                   "ellipsoid", 
                                                                   background_metadata
       )
     }
     else {
-      cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+      cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                   "ellipsoid", 
                                                                   cluster_metadata
       )
@@ -500,7 +498,7 @@ results <- lapply(n_clusters, function(n) {
   }
   
   mark(
-    spaSim3D::simulate_spe_metadata3D(cluster_metadata,
+    simulate_spe_metadata3D(cluster_metadata,
                                       plot_image = FALSE),
     iterations = 10,
     check = F
@@ -550,7 +548,7 @@ methods::show(fig)
 plots[[7]] <- fig
 
 # 8. Testing simulating empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
-background_metadata <- spaSim3D::spe_metadata_background_template("random")
+background_metadata <- spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e6
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
@@ -564,11 +562,11 @@ tissue_structures <-
     "empty_background",
     "mixed_background",
     "mixed_ellipsoid",
-    "ringed_ellipsoid",
     "separated_ellipsoid",
+    "ringed_ellipsoid",
     "mixed_network",
-    "ringed_network",
-    "separated_network"
+    "separated_network",
+    "ringed_network"
   )
 
 
@@ -585,7 +583,7 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     
   }
   else if (tissue_structure == "mixed_ellipsoid") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "ellipsoid", 
                                                                 background_metadata)
 
@@ -597,7 +595,7 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     
   }
   else if (tissue_structure == "ringed_ellipsoid") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("ring",
+    cluster_metadata <- spe_metadata_cluster_template("ring",
                                                                 "ellipsoid", 
                                                                 background_metadata)
     
@@ -612,11 +610,11 @@ results <- lapply(tissue_structures, function(tissue_structure) {
      
   }
   else if (tissue_structure == "separated_ellipsoid") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "ellipsoid", 
                                                                 background_metadata)
     
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "ellipsoid", 
                                                                 cluster_metadata)
     
@@ -634,7 +632,7 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     
   }
   else if (tissue_structure == "mixed_network") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 background_metadata)
     
@@ -645,7 +643,7 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     cluster_metadata$cluster_1$width <- 5
   }
   else if (tissue_structure == "ringed_network") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("ring",
+    cluster_metadata <- spe_metadata_cluster_template("ring",
                                                                 "network", 
                                                                 background_metadata)
     
@@ -660,11 +658,11 @@ results <- lapply(tissue_structures, function(tissue_structure) {
     
   }
   else if (tissue_structure == "separated_network") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 background_metadata)
     
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 cluster_metadata)
     
@@ -685,7 +683,7 @@ results <- lapply(tissue_structures, function(tissue_structure) {
   }
   
   mark(
-    spaSim3D::simulate_spe_metadata3D(cluster_metadata,
+    simulate_spe_metadata3D(cluster_metadata,
                                       plot_image = FALSE),
     iterations = 10,
     check = F
@@ -715,11 +713,11 @@ p_runtime <- ggplot(df, aes(tissue_structures, median_time)) +
       "empty_background" = "EB",
       "mixed_background" = "MB",
       "mixed_ellipsoid" = "ME",
-      "ringed_ellipsoid" = "RE",
       "separated_ellipsoid" = "SE",
+      "ringed_ellipsoid" = "RE",
       "mixed_network" = "MN",
-      "ringed_network" = "RN",
-      "separated_network" = "SN"
+      "separated_network" = "SN",
+      "ringed_network" = "RN"
     )
   )
 
@@ -736,11 +734,11 @@ p_memory <- ggplot(df, aes(tissue_structures, mem_alloc / 1024^2)) +
       "empty_background" = "EB",
       "mixed_background" = "MB",
       "mixed_ellipsoid" = "ME",
-      "ringed_ellipsoid" = "RE",
       "separated_ellipsoid" = "SE",
+      "ringed_ellipsoid" = "RE",
       "mixed_network" = "MN",
-      "ringed_network" = "RN",
-      "separated_network" = "SN"
+      "separated_network" = "SN",
+      "ringed_network" = "RN"
     )
   )
 
