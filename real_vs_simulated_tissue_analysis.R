@@ -1104,7 +1104,7 @@ mouse_md <- spe_metadata_cluster_template("regular", "cylinder", mouse_md)
 mouse_md <- spe_metadata_cluster_template("regular", "cylinder", mouse_md)
 
 
-mouse_md$background$n_cells <- 7000000 * 3
+mouse_md$background$n_cells <- 7000000
 mouse_md$background$length <- 100
 mouse_md$background$width <- 100
 mouse_md$background$height <- 50
@@ -1200,8 +1200,13 @@ plot_cells3D(mouse_embryo_sim_df[sample.int(nrow(mouse_embryo_sim_df), size = 10
 
 
 # Analysis
-mouse_embryo_cell_types <- intersect(unique(mouse_embryo_real_df$Cell.Type), 
-                                     unique(mouse_embryo_sim_df$Cell.Type))
+mouse_embryo_cell_types <- c("Spinal cord neuroectoderm",
+                             "Telencephalon neuroectoderm",
+                             "Fibroblasts",
+                             "Lateral plate and intermediate mesoderm",
+                             "Limb progenitors and lateral plate mesenchyme",
+                             "Cranial mesenchyme",
+                             "Facial mesenchyme")
 
 rm(mouse_embryo_real_df)
 
