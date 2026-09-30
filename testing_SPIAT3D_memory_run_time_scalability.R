@@ -938,7 +938,9 @@ for (metric in metrics) {
       mem_alloc = as.numeric(.x$mem_alloc)      # bytes
     )
   })
-  
+
+  df$tissue_structures <- factor(df$tissue_structures, structures)
+    
   # Runtime plot
   p_runtime <- ggplot(df, aes(tissue_structures, median_time)) +
     geom_point(size = 3) +
