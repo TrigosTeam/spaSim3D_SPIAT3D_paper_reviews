@@ -586,8 +586,8 @@ for (tissue_structure in tissue_structures) {
   }
   else if (tissue_structure == "mixed_ellipsoid") {
     cluster_metadata <- spe_metadata_cluster_template("regular",
-                                                                "ellipsoid", 
-                                                                background_metadata)
+                                                      "ellipsoid", 
+                                                      background_metadata)
     
     cluster_metadata$cluster_1$cluster_cell_types <- c("A", "B")
     cluster_metadata$cluster_1$cluster_cell_proportions <- c(0.5, 0.5)  
@@ -598,8 +598,8 @@ for (tissue_structure in tissue_structures) {
   }
   else if (tissue_structure == "ringed_ellipsoid") {
     cluster_metadata <- spe_metadata_cluster_template("ring",
-                                                                "ellipsoid", 
-                                                                background_metadata)
+                                                      "ellipsoid", 
+                                                      background_metadata)
     
     cluster_metadata$cluster_1$cluster_cell_types <- "A"
     cluster_metadata$cluster_1$cluster_cell_proportions <- 1
@@ -613,12 +613,12 @@ for (tissue_structure in tissue_structures) {
   }
   else if (tissue_structure == "separated_ellipsoid") {
     cluster_metadata <- spe_metadata_cluster_template("regular",
-                                                                "ellipsoid", 
-                                                                background_metadata)
+                                                      "ellipsoid", 
+                                                      background_metadata)
     
     cluster_metadata <- spe_metadata_cluster_template("regular",
-                                                                "ellipsoid", 
-                                                                cluster_metadata)
+                                                      "ellipsoid", 
+                                                      cluster_metadata)
     
     cluster_metadata$cluster_1$cluster_cell_types <- "A"
     cluster_metadata$cluster_1$cluster_cell_proportions <- 1
@@ -635,8 +635,8 @@ for (tissue_structure in tissue_structures) {
   }
   else if (tissue_structure == "mixed_network") {
     cluster_metadata <- spe_metadata_cluster_template("regular",
-                                                                "network", 
-                                                                background_metadata)
+                                                      "network", 
+                                                      background_metadata)
     
     cluster_metadata$cluster_1$cluster_cell_types <- c("A", "B")
     cluster_metadata$cluster_1$cluster_cell_proportions <- c(0.5, 0.5)  
@@ -646,8 +646,8 @@ for (tissue_structure in tissue_structures) {
   }
   else if (tissue_structure == "ringed_network") {
     cluster_metadata <- spe_metadata_cluster_template("ring",
-                                                                "network", 
-                                                                background_metadata)
+                                                      "network", 
+                                                      background_metadata)
     
     cluster_metadata$cluster_1$cluster_cell_types <- "A"
     cluster_metadata$cluster_1$cluster_cell_proportions <- 1
@@ -661,12 +661,12 @@ for (tissue_structure in tissue_structures) {
   }
   else if (tissue_structure == "separated_network") {
     cluster_metadata <- spe_metadata_cluster_template("regular",
-                                                                "network", 
-                                                                background_metadata)
+                                                      "network", 
+                                                      background_metadata)
     
     cluster_metadata <- spe_metadata_cluster_template("regular",
-                                                                "network", 
-                                                                cluster_metadata)
+                                                      "network", 
+                                                      cluster_metadata)
     
     cluster_metadata$cluster_1$cluster_cell_types <- "A"
     cluster_metadata$cluster_1$cluster_cell_proportions <- 1
@@ -692,9 +692,9 @@ plots <- list()
 
 metrics <- c(
   "average_minimum_distances_between_cells",
-  "neighbourhood_counts_gradient",
-  "cells_in_neighbourhood_gradient",
-  "neighourhood_entropy_gradient",
+  "average_neighbourhood_counts_gradient",
+  "average_cells_in_neighbourhood_gradient",
+  "average_neighourhood_entropy_gradient",
   "cross_K_gradient",
   "cross_L_gradient",
   "cross_G_gradient",
@@ -716,58 +716,112 @@ for (metric in metrics) {
       
       mark(
         calculate_minimum_distances_between_cell_types3D(spes[[tissue_structure]],
-                                                                  cell_types_of_interest = NULL,
-                                                                  feature_colname = "Cell.Type",
-                                                                  show_summary = TRUE,
-                                                                  plot_image = FALSE),
+                                                         cell_types_of_interest = NULL,
+                                                         feature_colname = "Cell.Type",
+                                                         show_summary = TRUE,
+                                                         plot_image = FALSE),
         iterations = 1,
         check = F
       )
       
     })
   }
-  else if (metric == "neighbourhood_counts_gradient") {
+  else if (metric == "average_neighbourhood_counts_gradient") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
+      calculate_average_neighbourhood_counts_gradient <- function(spe,
+                                                                  reference_cell_type,
+                                                                  target_cell_types,
+                                                                  radii,
+                                                                  feature_colname,
+                                                                  plot_image) {
+        
+        df <- calculate_neighbourhood_counts_gradient3D(spe,
+                                                        reference_cell_type,
+                                                        target_cell_types,
+                                                        radii,
+                                                        feature_colname,
+                                                        plot_image)
+        
+        
+        return(apply(df[ , target_cell_types], 2, mean))
+      }
+      
       mark(
-        calculate_neighbourhood_counts_gradient3D(spes[[tissue_structure]],
-                                                           reference_cell_type = "A",
-                                                           target_cell_types = c("A", "B"),
-                                                           radii = seq(10, 100, 10),
-                                                           feature_colname = "Cell.Type",
-                                                           plot_image = FALSE),
+        calculate_average_neighbourhood_counts_gradient(spes[[tissue_structure]],
+                                                        reference_cell_type = "A",
+                                                        target_cell_types = c("A", "B"),
+                                                        radii = seq(10, 100, 10),
+                                                        feature_colname = "Cell.Type",
+                                                        plot_image = FALSE),
         iterations = 1,
         check = F
       )
       
     })
   }
-  else if (metric == "cells_in_neighbourhood_gradient") {
+  else if (metric == "average_cells_in_neighbourhood_gradient") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
+      calculate_average_cells_in_neigbhourhood_gradient <- function(spe,
+                                                                    reference_cell_type,
+                                                                    target_cell_types,
+                                                                    radii,
+                                                                    feature_colname,
+                                                                    plot_image) {
+        
+        df <- calculate_cells_in_neighbourhood_gradient3D(spe,
+                                                          reference_cell_type,
+                                                          target_cell_types,
+                                                          radii,
+                                                          feature_colname,
+                                                          plot_image)
+        
+        
+        return(apply(df[ , target_cell_types], 2, mean))
+      }
+      
       mark(
-        calculate_cells_in_neighbourhood_gradient3D(spes[[tissue_structure]],
-                                                             reference_cell_type = "A",
-                                                             target_cell_types = c("A", "B"),
-                                                             radii = seq(10, 100, 10),
-                                                             feature_colname = "Cell.Type",
-                                                             plot_image = FALSE),
+        calculate_average_cells_in_neigbhourhood_gradient(spes[[tissue_structure]],
+                                                          reference_cell_type = "A",
+                                                          target_cell_types = c("A", "B"),
+                                                          radii = seq(10, 100, 10),
+                                                          feature_colname = "Cell.Type",
+                                                          plot_image = FALSE),
         iterations = 1,
         check = F
       )
       
     })
   }
-  else if (metric == "neighourhood_entropy_gradient") {
+  else if (metric == "average_neighourhood_entropy_gradient") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
+      calculate_average_neighbourhood_entropy_gradient <- function(spe,
+                                                                   reference_cell_type,
+                                                                   target_cell_types,
+                                                                   radii,
+                                                                   feature_colname,
+                                                                   plot_image) {
+        
+        df <- calculate_neighbourhood_entropy_gradient3D(spe,
+                                                         reference_cell_type,
+                                                         target_cell_types,
+                                                         radii,
+                                                         feature_colname,
+                                                         plot_image)
+        
+        
+        return(apply(df[ , target_cell_types], 2, mean))
+      }
+      
       mark(
-        calculate_neighbourhood_entropy_gradient3D(spes[[tissue_structure]],
-                                                            reference_cell_type = "A",
-                                                            target_cell_types = c("A", "B"),
-                                                            radii = seq(10, 100, 10),
-                                                            feature_colname = "Cell.Type",
-                                                            plot_image = FALSE),
+        calculate_average_neighbourhood_entropy_gradient(spes[[tissue_structure]],
+                                                         reference_cell_type = "A",
+                                                         target_cell_types = c("A", "B"),
+                                                         radii = seq(10, 100, 10),
+                                                         feature_colname = "Cell.Type",
+                                                         plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -779,11 +833,11 @@ for (metric in metrics) {
       
       mark(
         calculate_cross_K_gradient3D(spes[[tissue_structure]],
-                                              reference_cell_type = "A",
-                                              target_cell_types = c("A", "B"),
-                                              radii = seq(10, 100, 10),
-                                              feature_colname = "Cell.Type",
-                                              plot_image = FALSE),
+                                     reference_cell_type = "A",
+                                     target_cell_types = c("A", "B"),
+                                     radii = seq(10, 100, 10),
+                                     feature_colname = "Cell.Type",
+                                     plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -795,11 +849,11 @@ for (metric in metrics) {
       
       mark(
         calculate_cross_L_gradient3D(spes[[tissue_structure]],
-                                              reference_cell_type = "A",
-                                              target_cell_types = c("A", "B"),
-                                              radii = seq(10, 100, 10),
-                                              feature_colname = "Cell.Type",
-                                              plot_image = FALSE),
+                                     reference_cell_type = "A",
+                                     target_cell_types = c("A", "B"),
+                                     radii = seq(10, 100, 10),
+                                     feature_colname = "Cell.Type",
+                                     plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -811,11 +865,11 @@ for (metric in metrics) {
       
       mark(
         calculate_cross_G_gradient3D(spes[[tissue_structure]],
-                                              reference_cell_type = "A",
-                                              target_cell_type = "B",
-                                              radii = seq(10, 100, 10),
-                                              feature_colname = "Cell.Type",
-                                              plot_image = FALSE),
+                                     reference_cell_type = "A",
+                                     target_cell_type = "B",
+                                     radii = seq(10, 100, 10),
+                                     feature_colname = "Cell.Type",
+                                     plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -827,11 +881,11 @@ for (metric in metrics) {
       
       mark(
         calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
-                                                    reference_cell_type = "A",
-                                                    target_cell_type = "B",
-                                                    radii = seq(10, 100, 10),
-                                                    feature_colname = "Cell.Type",
-                                                    plot_image = FALSE),
+                                           reference_cell_type = "A",
+                                           target_cell_type = "B",
+                                           radii = seq(10, 100, 10),
+                                           feature_colname = "Cell.Type",
+                                           plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -843,11 +897,11 @@ for (metric in metrics) {
       
       mark(
         calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
-                                                    reference_cell_type = "A",
-                                                    target_cell_type = "B",
-                                                    radii = seq(10, 100, 10),
-                                                    feature_colname = "Cell.Type",
-                                                    plot_image = FALSE),
+                                           reference_cell_type = "A",
+                                           target_cell_type = "B",
+                                           radii = seq(10, 100, 10),
+                                           feature_colname = "Cell.Type",
+                                           plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -859,11 +913,11 @@ for (metric in metrics) {
       
       mark(
         calculate_fast_co_occurrence_gradient3D(spes[[tissue_structure]],
-                                                         reference_cell_type = "A",
-                                                         target_cell_type = "B",
-                                                         radii = seq(10, 100, 10),
-                                                         feature_colname = "Cell.Type",
-                                                         plot_image = FALSE),
+                                                reference_cell_type = "A",
+                                                target_cell_type = "B",
+                                                radii = seq(10, 100, 10),
+                                                feature_colname = "Cell.Type",
+                                                plot_image = FALSE),
         iterations = 1,
         check = F
       )
@@ -883,15 +937,15 @@ for (metric in metrics) {
                                                                      weight_method) {
         
         grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe,
-                                                                          n_splits,
-                                                                          reference_cell_types,
-                                                                          target_cell_types,
-                                                                          feature_colname,
-                                                                          plot_image)
+                                                                 n_splits,
+                                                                 reference_cell_types,
+                                                                 target_cell_types,
+                                                                 feature_colname,
+                                                                 plot_image)
         
         spatial_autocorrelation <- calculate_spatial_autocorrelation3D(grid_metrics = grid_metrics,
-                                                                                metric_colname,
-                                                                                weight_method)
+                                                                       metric_colname,
+                                                                       weight_method)
         
         
         return(spatial_autocorrelation)
@@ -924,16 +978,16 @@ for (metric in metrics) {
                                                         metric_colname) {
         
         grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe,
-                                                                          n_splits,
-                                                                          reference_cell_types,
-                                                                          target_cell_types,
-                                                                          feature_colname,
-                                                                          plot_image)
+                                                                 n_splits,
+                                                                 reference_cell_types,
+                                                                 target_cell_types,
+                                                                 feature_colname,
+                                                                 plot_image)
         
         prevalence <- calculate_prevalence_gradient3D(grid_metrics = grid_metrics,
-                                                               metric_colname,
-                                                               show_AUC = T,
-                                                               plot_image)
+                                                      metric_colname,
+                                                      show_AUC = T,
+                                                      plot_image)
         return(prevalence)
         
       }
@@ -965,14 +1019,14 @@ for (metric in metrics) {
                                                                   weight_method) {
         
         grid_metrics <- calculate_entropy_grid_metrics3D(spe,
-                                                                  n_splits,
-                                                                  cell_types_of_interest,
-                                                                  feature_colname,
-                                                                  plot_image)
+                                                         n_splits,
+                                                         cell_types_of_interest,
+                                                         feature_colname,
+                                                         plot_image)
         
         spatial_autocorrelation <- calculate_spatial_autocorrelation3D(grid_metrics = grid_metrics,
-                                                                                metric_colname,
-                                                                                weight_method)
+                                                                       metric_colname,
+                                                                       weight_method)
         
         
         return(spatial_autocorrelation)
@@ -1004,15 +1058,15 @@ for (metric in metrics) {
                                                      metric_colname) {
         
         grid_metrics <- calculate_entropy_grid_metrics3D(spe,
-                                                                  n_splits,
-                                                                  cell_types_of_interest,
-                                                                  feature_colname,
-                                                                  plot_image)
+                                                         n_splits,
+                                                         cell_types_of_interest,
+                                                         feature_colname,
+                                                         plot_image)
         
         prevalence <- calculate_prevalence_gradient3D(grid_metrics = grid_metrics,
-                                                               metric_colname,
-                                                               show_AUC = T,
-                                                               plot_image)
+                                                      metric_colname,
+                                                      show_AUC = T,
+                                                      plot_image)
         return(prevalence)
         
       }
