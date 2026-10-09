@@ -789,7 +789,7 @@ plots[[8]] <- fig
 
  
 # Save all plots ----
-saveRDS(dfs, "~/R/plots/spaSim3D_testing")
+saveRDS(dfs, "~/R/plots/spaSim3D_testing/dfs.RDS")
 
 setwd("~/R/plots/spaSim3D_testing")
 pdf("figs.pdf", width = 6, height = 3)
