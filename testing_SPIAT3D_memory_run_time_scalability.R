@@ -1152,13 +1152,11 @@ for (metric in metrics) {
 
 saveRDS(dfs, "~/R/plots/SPIAT3D_testing_dfs.RDS")
 
-pdf("~/R/plots/SPIAT3D_testing.pdf", width = 8, height = 4)
-
-for (fig in plots) {
-  print(fig)  
+for (i in seq(length(plots))) {
+  pdf(paste("~/R/plots/fig_", i, ".pdf", sep = ""), width = 8, height = 4)
+  print(plots[[i]])  
+  dev.off()
 }
-
-dev.off()
 
 
 
