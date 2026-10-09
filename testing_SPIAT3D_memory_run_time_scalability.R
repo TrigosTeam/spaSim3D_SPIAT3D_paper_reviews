@@ -56,12 +56,11 @@ plot_results_n_cells <- function(results, n_cells) {
 
 # Libraries ----
 library(bench)
+library(profmem)
 library(dplyr)
 library(purrr)
 library(ggplot2)
 library(cowplot)
-library(spaSim3D)
-library(SPIAT3D)
 
 
 # 1. Testing calculate_minimum_distances_between_cell_types3D with increasing number of cells ----
@@ -551,7 +550,7 @@ methods::show(fig)
 
 
 # 11. Testing all SPIAT3D functions with empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
-background_metadata <- spaSim3D::spe_metadata_background_template("random")
+background_metadata <- spe_metadata_background_template("random")
 background_metadata$background$n_cells <- 1e5
 background_metadata$background$length <- 100
 background_metadata$background$width <- 100
@@ -586,7 +585,7 @@ for (tissue_structure in tissue_structures) {
     
   }
   else if (tissue_structure == "mixed_ellipsoid") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "ellipsoid", 
                                                                 background_metadata)
     
@@ -598,7 +597,7 @@ for (tissue_structure in tissue_structures) {
     
   }
   else if (tissue_structure == "ringed_ellipsoid") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("ring",
+    cluster_metadata <- spe_metadata_cluster_template("ring",
                                                                 "ellipsoid", 
                                                                 background_metadata)
     
@@ -613,11 +612,11 @@ for (tissue_structure in tissue_structures) {
     
   }
   else if (tissue_structure == "separated_ellipsoid") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "ellipsoid", 
                                                                 background_metadata)
     
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "ellipsoid", 
                                                                 cluster_metadata)
     
@@ -635,7 +634,7 @@ for (tissue_structure in tissue_structures) {
     
   }
   else if (tissue_structure == "mixed_network") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 background_metadata)
     
@@ -646,7 +645,7 @@ for (tissue_structure in tissue_structures) {
     cluster_metadata$cluster_1$width <- 5
   }
   else if (tissue_structure == "ringed_network") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("ring",
+    cluster_metadata <- spe_metadata_cluster_template("ring",
                                                                 "network", 
                                                                 background_metadata)
     
@@ -661,11 +660,11 @@ for (tissue_structure in tissue_structures) {
     
   }
   else if (tissue_structure == "separated_network") {
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 background_metadata)
     
-    cluster_metadata <- spaSim3D::spe_metadata_cluster_template("regular",
+    cluster_metadata <- spe_metadata_cluster_template("regular",
                                                                 "network", 
                                                                 cluster_metadata)
     
@@ -692,7 +691,7 @@ dfs <- list()
 plots <- list()
 
 metrics <- c(
-  "minimum_distances_between_cells",
+  "average_minimum_distances_between_cells",
   "neighbourhood_counts_gradient",
   "cells_in_neighbourhood_gradient",
   "neighourhood_entropy_gradient",
@@ -700,25 +699,26 @@ metrics <- c(
   "cross_L_gradient",
   "cross_G_gradient",
   "mixing_scores_gradient",
+  "normalised_mixing_scores_gradient",
   "fast_co_occurrence_gradient",
-  "cell_proportion_grid_metrics",
-  "entropy_grid_metrics",
-  "spatial_autocorrelation",
-  "prevalence_gradient"
+  "proportion_based_spatial_autocorrelation",
+  "proportion_based_prevalence_gradient",
+  "entropy_based_spatial_autocorrelation",
+  "entropy_based_prevalence_gradient"
 )
 
 for (metric in metrics) {
   
   print(metric)
   
-  if (metric == "minimum_distances_between_cells") {
+  if (metric == "average_minimum_distances_between_cells") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_minimum_distances_between_cell_types3D(spes[[tissue_structure]],
+        calculate_minimum_distances_between_cell_types3D(spes[[tissue_structure]],
                                                                   cell_types_of_interest = NULL,
                                                                   feature_colname = "Cell.Type",
-                                                                  show_summary = FALSE,
+                                                                  show_summary = TRUE,
                                                                   plot_image = FALSE),
         iterations = 1,
         check = F
@@ -730,7 +730,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_neighbourhood_counts_gradient3D(spes[[tissue_structure]],
+        calculate_neighbourhood_counts_gradient3D(spes[[tissue_structure]],
                                                            reference_cell_type = "A",
                                                            target_cell_types = c("A", "B"),
                                                            radii = seq(10, 100, 10),
@@ -746,7 +746,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_cells_in_neighbourhood_gradient3D(spes[[tissue_structure]],
+        calculate_cells_in_neighbourhood_gradient3D(spes[[tissue_structure]],
                                                              reference_cell_type = "A",
                                                              target_cell_types = c("A", "B"),
                                                              radii = seq(10, 100, 10),
@@ -762,7 +762,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_neighbourhood_entropy_gradient3D(spes[[tissue_structure]],
+        calculate_neighbourhood_entropy_gradient3D(spes[[tissue_structure]],
                                                             reference_cell_type = "A",
                                                             target_cell_types = c("A", "B"),
                                                             radii = seq(10, 100, 10),
@@ -778,7 +778,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_cross_K_gradient3D(spes[[tissue_structure]],
+        calculate_cross_K_gradient3D(spes[[tissue_structure]],
                                               reference_cell_type = "A",
                                               target_cell_types = c("A", "B"),
                                               radii = seq(10, 100, 10),
@@ -794,7 +794,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_cross_L_gradient3D(spes[[tissue_structure]],
+        calculate_cross_L_gradient3D(spes[[tissue_structure]],
                                               reference_cell_type = "A",
                                               target_cell_types = c("A", "B"),
                                               radii = seq(10, 100, 10),
@@ -810,7 +810,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_cross_G_gradient3D(spes[[tissue_structure]],
+        calculate_cross_G_gradient3D(spes[[tissue_structure]],
                                               reference_cell_type = "A",
                                               target_cell_type = "B",
                                               radii = seq(10, 100, 10),
@@ -826,7 +826,23 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
+        calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
+                                                    reference_cell_type = "A",
+                                                    target_cell_type = "B",
+                                                    radii = seq(10, 100, 10),
+                                                    feature_colname = "Cell.Type",
+                                                    plot_image = FALSE),
+        iterations = 1,
+        check = F
+      )
+      
+    })
+  }
+  else if (metric == "normalised_mixing_scores_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      mark(
+        calculate_mixing_scores_gradient3D(spes[[tissue_structure]],
                                                     reference_cell_type = "A",
                                                     target_cell_type = "B",
                                                     radii = seq(10, 100, 10),
@@ -842,7 +858,7 @@ for (metric in metrics) {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
       mark(
-        SPIAT3D::calculate_fast_co_occurrence_gradient3D(spes[[tissue_structure]],
+        calculate_fast_co_occurrence_gradient3D(spes[[tissue_structure]],
                                                          reference_cell_type = "A",
                                                          target_cell_type = "B",
                                                          radii = seq(10, 100, 10),
@@ -854,76 +870,165 @@ for (metric in metrics) {
       
     })
   }
-  else if (metric == "cell_proportion_grid_metrics") {
+  else if (metric == "proportion_based_spatial_autocorrelation") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
+      calculate_proportion_based_spatial_autocorrelation <- function(spe,
+                                                                     n_splits,
+                                                                     reference_cell_types,
+                                                                     target_cell_types,
+                                                                     feature_colname,
+                                                                     plot_image,
+                                                                     metric_colname,
+                                                                     weight_method) {
+        
+        grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe,
+                                                                          n_splits,
+                                                                          reference_cell_types,
+                                                                          target_cell_types,
+                                                                          feature_colname,
+                                                                          plot_image)
+        
+        spatial_autocorrelation <- calculate_spatial_autocorrelation3D(grid_metrics = grid_metrics,
+                                                                                metric_colname,
+                                                                                weight_method)
+        
+        
+        return(spatial_autocorrelation)
+        
+      }
+      
       mark(
-        SPIAT3D::calculate_cell_proportion_grid_metrics3D(spes[[tissue_structure]],
-                                                          n_splits = 10,
-                                                          reference_cell_types = "A",
-                                                          target_cell_types = "B",
-                                                          feature_colname = "Cell.Type",
-                                                          plot_image = FALSE),
+        calculate_proportion_based_spatial_autocorrelation(spes[[tissue_structure]],
+                                                           n_splits = 10,
+                                                           reference_cell_types = "A",
+                                                           target_cell_types = "B",
+                                                           feature_colname = "Cell.Type",
+                                                           plot_image = FALSE,
+                                                           metric_colname = "proportion",
+                                                           weight_method = "queen"),
+        iterations = 1,
+        check = F
+      )
+    })
+  }
+  else if (metric == "proportion_based_prevalence_gradient") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      calculate_proportion_based_prevalence <- function(spe,
+                                                        n_splits,
+                                                        reference_cell_types,
+                                                        target_cell_types,
+                                                        feature_colname,
+                                                        plot_image,
+                                                        metric_colname) {
+        
+        grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe,
+                                                                          n_splits,
+                                                                          reference_cell_types,
+                                                                          target_cell_types,
+                                                                          feature_colname,
+                                                                          plot_image)
+        
+        prevalence <- calculate_prevalence_gradient3D(grid_metrics = grid_metrics,
+                                                               metric_colname,
+                                                               show_AUC = T,
+                                                               plot_image)
+        return(prevalence)
+        
+      }
+      
+      mark(
+        calculate_proportion_based_prevalence(
+          spes[[tissue_structure]],
+          n_splits = 10,
+          reference_cell_types = "A",
+          target_cell_types = "B",
+          feature_colname = "Cell.Type",
+          plot_image = FALSE,
+          metric_colname = "proportion"
+        ),
+        iterations = 1,
+        check = F
+      )
+    })
+  }
+  else if (metric == "entropy_based_spatial_autocorrelation") {
+    results <- lapply(tissue_structures, function(tissue_structure) {
+      
+      calculate_entropy_based_spatial_autocorrelation <- function(spe,
+                                                                  n_splits,
+                                                                  cell_types_of_interest,
+                                                                  feature_colname,
+                                                                  plot_image,
+                                                                  metric_colname,
+                                                                  weight_method) {
+        
+        grid_metrics <- calculate_entropy_grid_metrics3D(spe,
+                                                                  n_splits,
+                                                                  cell_types_of_interest,
+                                                                  feature_colname,
+                                                                  plot_image)
+        
+        spatial_autocorrelation <- calculate_spatial_autocorrelation3D(grid_metrics = grid_metrics,
+                                                                                metric_colname,
+                                                                                weight_method)
+        
+        
+        return(spatial_autocorrelation)
+      }
+      
+      mark(
+        calculate_entropy_based_spatial_autocorrelation(spes[[tissue_structure]],
+                                                        n_splits = 10,
+                                                        cell_types_of_interest = c("A", "B"),
+                                                        feature_colname = "Cell.Type",
+                                                        plot_image = FALSE,
+                                                        metric_colname = "entropy",
+                                                        weight_method = "queen"),
         iterations = 1,
         check = F
       )
       
     })
   }
-  else if (metric == "entropy_grid_metrics") {
+  else if (metric == "entropy_based_prevalence_gradient") {
     results <- lapply(tissue_structures, function(tissue_structure) {
       
+      
+      calculate_entropy_based_prevalence <- function(spe,
+                                                     n_splits,
+                                                     cell_types_of_interest,
+                                                     feature_colname,
+                                                     plot_image,
+                                                     metric_colname) {
+        
+        grid_metrics <- calculate_entropy_grid_metrics3D(spe,
+                                                                  n_splits,
+                                                                  cell_types_of_interest,
+                                                                  feature_colname,
+                                                                  plot_image)
+        
+        prevalence <- calculate_prevalence_gradient3D(grid_metrics = grid_metrics,
+                                                               metric_colname,
+                                                               show_AUC = T,
+                                                               plot_image)
+        return(prevalence)
+        
+      }
+      
       mark(
-        SPIAT3D::calculate_entropy_grid_metrics3D(spes[[tissue_structure]],
-                                                  n_splits = 10,
-                                                  cell_types_of_interest = c("A", "B"),
-                                                  feature_colname = "Cell.Type",
-                                                  plot_image = FALSE),
+        calculate_entropy_based_prevalence(
+          spes[[tissue_structure]],
+          n_splits = 10,
+          cell_types_of_interest = c("A", "B"),
+          feature_colname = "Cell.Type",
+          plot_image = FALSE,
+          metric_colname = "entropy"
+        ),
         iterations = 1,
         check = F
       )
-      
-    })
-  }
-  else if (metric == "spatial_autocorrelation") {
-    results <- lapply(tissue_structures, function(tissue_structure) {
-      
-      proportion_grid_metrics <- SPIAT3D::calculate_cell_proportion_grid_metrics3D(spes[[tissue_structure]],
-                                                                                   n_splits = 10,
-                                                                                   reference_cell_types = "A",
-                                                                                   target_cell_types = "B",
-                                                                                   feature_colname = "Cell.Type",
-                                                                                   plot_image = FALSE)
-      
-      mark(
-        SPIAT3D::calculate_spatial_autocorrelation3D(grid_metrics = proportion_grid_metrics,
-                                                     metric_colname = "proportion",
-                                                     weight_method = "queen"),
-        iterations = 1,
-        check = F
-      )
-      
-    })
-  }
-  else if (metric == "prevalence_gradient") {
-    results <- lapply(tissue_structures, function(tissue_structure) {
-      
-      proportion_grid_metrics <- SPIAT3D::calculate_cell_proportion_grid_metrics3D(spes[[tissue_structure]],
-                                                                                   n_splits = 10,
-                                                                                   reference_cell_types = "A",
-                                                                                   target_cell_types = "B",
-                                                                                   feature_colname = "Cell.Type",
-                                                                                   plot_image = FALSE)
-      
-      mark(
-        SPIAT3D::calculate_prevalence_gradient3D(grid_metrics = proportion_grid_metrics,
-                                                 metric_colname = "proportion",
-                                                 show_AUC = F,
-                                                 plot_image = F),
-        iterations = 1,
-        check = F
-      )
-      
     })
   }
   else {
