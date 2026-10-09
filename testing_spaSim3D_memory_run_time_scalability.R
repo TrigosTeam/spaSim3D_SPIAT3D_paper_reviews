@@ -790,10 +790,12 @@ plots[[8]] <- fig
  
 # Save all plots ----
 saveRDS(dfs, "~/R/plots/spaSim3D_testing/dfs.RDS")
+saveRDS(plots, "~/R/plots/spaSim3D_testing/plots.RDS")
+
 
 setwd("~/R/plots/spaSim3D_testing")
-pdf("figs.pdf", width = 6, height = 3)
 for (i in seq(length(plots))) {
+  pdf(paste("fig_", i, ".pdf", sep = ""), width = 6, height = 3)
   print(plots[[i]])
 }
 dev.off() 
