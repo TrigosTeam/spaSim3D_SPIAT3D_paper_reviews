@@ -6,15 +6,34 @@
 # - number of clusters
 # - complexity of networks
 
+dfs <- list()
 plots <- list()
 
 # Libraries ----
 library(bench)
+library(profmem)
 library(dplyr)
 library(purrr)
 library(ggplot2)
 library(cowplot)
 
+# 0. Dummy ----
+n_cells <- c(1e3, 1e4)
+
+results <- lapply(n_cells, function(n) {
+  
+  mark(
+    simulate_random_background_cells3D(n_cells = n,
+                                       length = 100,
+                                       width = 100,
+                                       height = 100,
+                                       minimum_distance_between_cells = (5 / (2.5) ^ (log(n, 10) - 2)),
+                                       plot_image = FALSE),
+    iterations = 10,
+    check = F
+  )
+  
+})
 # 1. Testing simulate_random_background_cells3D function with increasing number of cells ----
 n_cells <- c(1e3, 1e4, 1e5, 1e6, 1e7)
 
@@ -76,6 +95,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[1]] <- df
 plots[[1]] <- fig
 
 # 2. Testing simulate_ordered_background_cells3D function with increasing number of cells ----
@@ -139,6 +159,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[2]] <- df
 plots[[2]] <- fig
 
 # 3. Testing simulating ellipsoid clusters with increasing number of cells in the background ----
@@ -223,6 +244,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[3]] <- df
 plots[[3]] <- fig
 
 # 4. Testing simulating network clusters with increasing number of cells in the background ----
@@ -307,6 +329,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[4]] <- df
 plots[[4]] <- fig
 
 # 5. Testing simulating ellipsoid clusters with increasing size of clusters ----
@@ -327,6 +350,10 @@ ellipsoid_sizes <- list(
   c(35, 40, 45)
 )
 
+
+ellipsoid_volumes <- sapply(ellipsoid_sizes, function(x) {
+  (4 / 3) * pi * prod(x)
+})
 
 results <- lapply(ellipsoid_sizes, function(size) {
   
@@ -358,12 +385,14 @@ df <- map2_dfr(results, seq_len(length(ellipsoid_sizes)), ~{
   )
 })
 
+df$volume <- ellipsoid_volumes
+
 # Runtime plot
-p_runtime <- ggplot(df, aes(size, median_time)) +
+p_runtime <- ggplot(df, aes(volume, median_time)) +
   geom_line() +
   geom_point(size = 3) +
   labs(
-    x = "Ellipsoid size",
+    x = "Ellipsoid volume",
     y = "Median runtime (s)"
   ) +
   theme_minimal()
@@ -388,6 +417,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[5]] <- df
 plots[[5]] <- fig
 
 # 6. Testing simulating networks with increasing complexity of networks ----
@@ -463,6 +493,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[6]] <- df
 plots[[6]] <- fig
 
 # 7. Testing simulating ellipsoid clusters with increasing number of clusters ----
@@ -545,6 +576,7 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[7]] <- df
 plots[[7]] <- fig
 
 # 8. Testing simulating empty background vs mixed background vs ME vs RE vs SE vs MN vs RN vs SN ----
@@ -752,10 +784,13 @@ fig <- plot_grid(
 
 methods::show(fig)
 
+dfs[[8]] <- df
 plots[[8]] <- fig
 
  
 # Save all plots ----
+saveRDS(dfs, "~/R/plots/spaSim3D_testing")
+
 setwd("~/R/plots/spaSim3D_testing")
 pdf("figs.pdf", width = 6, height = 3)
 for (i in seq(length(plots))) {
