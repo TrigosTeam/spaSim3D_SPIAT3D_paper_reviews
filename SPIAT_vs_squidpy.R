@@ -2,8 +2,6 @@
 # Set seed for consistency
 set.seed(678999821)
 
-library(spaSim3D)
-library(SpatialExperiment)
 library(dplyr)
 library(ggplot2)
 
