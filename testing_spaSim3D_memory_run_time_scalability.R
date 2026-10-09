@@ -797,5 +797,6 @@ setwd("~/R/plots/spaSim3D_testing")
 for (i in seq(length(plots))) {
   pdf(paste("fig_", i, ".pdf", sep = ""), width = 6, height = 3)
   print(plots[[i]])
+  dev.off() 
 }
-dev.off() 
+
