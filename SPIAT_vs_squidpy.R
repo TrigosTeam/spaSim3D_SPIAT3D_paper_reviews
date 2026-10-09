@@ -164,14 +164,14 @@ analyse_SD1_simulations <- function(parameters_df) {
     AMD_df <- data.frame(matrix(nrow = n_simulations * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
-    # Define MS, NMS, ANC, ACIN, COO, ANE data frames as well as constants
+    # Define MS, NMS, ANC, ACIN, FCO, ANE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
     MS_df_colnames <- c("simulation", "reference", "target", radii_colnames)
     MS_df <- data.frame(matrix(nrow = n_simulations * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- COO_df <- CK_df <- CL_df <- CG_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- FCO_df <- CK_df <- CL_df <- CG_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -200,7 +200,7 @@ analyse_SD1_simulations <- function(parameters_df) {
                            ACIN = ACIN_df,
                            ANE = ANE_df,
                            ANC = ANC_df,
-                           COO = COO_df,
+                           FCO = FCO_df,
                            CK = CK_df,
                            CL = CL_df,
                            CG = CG_df,
@@ -247,14 +247,12 @@ analyse_SD1_simulations <- function(parameters_df) {
                                                            reference_cell_type,
                                                            cell_types,
                                                            radii,
-                                                           feature_colname = "Cell.Type",
-                                                           plot_image = F)
-      
+                                                           feature_colname = "Cell.Type")
       for (target_cell_type in cell_types) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
         metric_df_list[["ANC"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["ACIN"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["FCO"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CK"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CL"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CG"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
@@ -266,7 +264,7 @@ analyse_SD1_simulations <- function(parameters_df) {
         
         if (is.null(gradient_data)) {
           metric_df_list[["ANC"]][pair_index, radii_colnames] <- NA
-          metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["FCO"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CK"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CL"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CG"]][pair_index, radii_colnames] <- NA
@@ -277,7 +275,7 @@ analyse_SD1_simulations <- function(parameters_df) {
         }
         else {
           metric_df_list[["ANC"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_counts"]][[target_cell_type]]
-          metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+          metric_df_list[["FCO"]][pair_index, radii_colnames] <- gradient_data[["fast_co_occurrence"]][[target_cell_type]]
           metric_df_list[["CK"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]
           metric_df_list[["CL"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]]
           metric_df_list[["CG"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]]
@@ -322,8 +320,7 @@ analyse_SD1_simulations <- function(parameters_df) {
             
             PBP_df <- calculate_prevalence_gradient2D(proportion_grid_metrics,
                                                       "proportion",
-                                                      show_AUC = F,
-                                                      plot_image = F)
+                                                      show_AUC = F)
             
             
             metric_df_list[["PBSAC"]][pair_index, "PBSAC"] <- PBSAC
@@ -347,8 +344,7 @@ analyse_SD1_simulations <- function(parameters_df) {
             
             EBP_df <- calculate_prevalence_gradient2D(entropy_grid_metrics,
                                                       "entropy",
-                                                      show_AUC = F,
-                                                      plot_image = F)
+                                                      show_AUC = F)
             
             metric_df_list[["EBSAC"]][pair_index, "EBSAC"] <- EBSAC
             metric_df_list[["EBP"]][pair_index, thresholds_colnames] <- EBP_df$prevalence
@@ -406,12 +402,12 @@ analyse_SD1_simulations <- function(parameters_df) {
   }
   
   add_AUC_for_radii_gradient_metrics_to_metric_df_list <- function(metric_df_list) {
-    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "COO", "CK", "CL", "CG")
+    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "FCO", "CK", "CL", "CG")
     
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
-      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "COO", "CK", "CL", "CG")) {
+      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "FCO", "CK", "CL", "CG")) {
         subset_colnames <- c("simulation", "reference", "target", metric_AUC_name)
       }
       else {
@@ -447,8 +443,8 @@ analyse_SD1_simulations <- function(parameters_df) {
   metric_df_list <- add_AUC_for_radii_gradient_metrics_to_metric_df_list(metric_df_list)
   
   return(list("metric_df_list2D" = metric_df_list, "spe_list" = spe_list))
-}
 
+}
 
 # Running the functions ----
 parameters_df <- generate_random_parameters(
@@ -469,74 +465,245 @@ saveRDS(SD1_metric_df_list, "~/R/non_interactive_slurm/SD1_metric_df_list.RDS")
 write.csv(SD1_metric_df_list$spe_list$sim_1, "~/R/non_interactive_slurm/SD1_dfs/spe1.csv")
 
 
-
 SD1_metric_df_list <- readRDS("~/R/non_interactive_slurm/SD1_metric_df_list.RDS")
 
-plot_COO <- function(metric_df_list, simulation, reference_cell_type) {
-  simulation <- as.character(simulation)
+
+
+# Updated SPIAT function to match squidpy ----
+calculate_all_single_radius_cc_metrics2D <- function(spe,
+                                                     reference_cell_type,
+                                                     target_cell_types,
+                                                     radius,
+                                                     feature_colname) {
   
-  COO_metric_df <- SD1_metric_df_list$metric_df_list2D$COO
-  COO_metric_df_subset <- COO_metric_df[COO_metric_df$simulation == simulation & COO_metric_df$reference == reference_cell_type, ]
-  COO_metric_df_subset_plot <- reshape2::melt(COO_metric_df_subset)
-  COO_metric_df_subset_plot$variable <- as.numeric(gsub("r", "", COO_metric_df_subset_plot$variable))
+  # Check input parameters
+  if (class(spe) != "SpatialExperiment") {
+    stop("`spe` is not a SpatialExperiment object.")
+  }
+  # Check if there are empty strings or string of only spaces in 'cell_types_of_interest'
+  if (length(spe[[feature_colname]][trimws(spe[[feature_colname]]) == ""]) > 0) {
+    stop("spe cannot contain cell types that are an empty string or a string of only spaces.")
+  }
+  if (!(is.character(reference_cell_type) && length(reference_cell_type) == 1)) {
+    stop("`reference_cell_type` is not a character.")
+  }
+  if (!is.character(target_cell_types)) {
+    stop("`target_cell_types` is not a character vector.")
+  }
+  if (!(is.numeric(radius) && length(radius) == 1 && radius > 0)) {
+    stop(paste(radius, " is not a positive numeric."))
+  }
+  if (!is.character(feature_colname)) {
+    stop("`feature_colname` is not a character.")
+  }
+  if (is.null(spe[[feature_colname]])) {
+    stop(paste("No column called", feature_colname, "found in spe object."))
+  }
   
-  fig <- ggplot(COO_metric_df_subset_plot, aes(variable, value, color = target)) +
-    geom_line()
-  methods::show(fig)
+  ## For reference_cell_type, check it is found in the spe object
+  if (!(reference_cell_type %in% spe[[feature_colname]])) {
+    warning(paste("The reference_cell_type", reference_cell_type,"is not found in the spe object"))
+    return(NULL)
+  }
+  ## For target_cell_types, check they are found in the spe object
+  unknown_cell_types <- setdiff(target_cell_types, spe[[feature_colname]])
+  if (length(unknown_cell_types) != 0) {
+    warning(paste("The following cell types in target_cell_types are not found in the spe object:\n   ",
+                  paste(unknown_cell_types, collapse = ", ")))
+  }
   
+  # Define result
+  result <- list("neighbourhood_counts" = list(),
+                 "cells_in_neighbourhood" = list(),
+                 "neighbourhood_entropy" = list(),
+                 "mixing_score" = list(),
+                 "cross_K" = list(),
+                 "cross_L" = list(),
+                 "cross_G" = list(),
+                 "fast_co_occurrence" = list())
+  
+  # Define other constants
+  mixing_score_df_colnames <- c("ref_cell_type",
+                                "tar_cell_type",
+                                "n_ref_cells",
+                                "n_tar_cells",
+                                "n_ref_tar_interactions",
+                                "n_ref_ref_interactions",
+                                "mixing_score",
+                                "normalised_mixing_score")
+  
+  cross_K_df_colnames <- c("reference",
+                           "expected",
+                           target_cell_types)
+  cross_G_df_colnames <- c("observed_cross_G",
+                           "expected_cross_G")
+  fast_co_occurrence_df_colnames <- c("reference",
+                                      target_cell_types)
+  
+  # Get rough dimensions of window for cross_K
+  spe_coords <- data.frame(SpatialExperiment::spatialCoords(spe))
+  length <- (max(spe_coords$Cell.X.Position) - min(spe_coords$Cell.X.Position))
+  width  <- (max(spe_coords$Cell.Y.Position) - min(spe_coords$Cell.Y.Position))
+  
+  # Get area of the window the cells are in
+  area <- length * width
+  
+  # All single radius cc metrics stem from calculate_neighbourhood_entropy2D function
+  neighbourhood_entropy_df <- calculate_neighbourhood_entropy2D(spe,
+                                                                reference_cell_type,
+                                                                target_cell_types,
+                                                                radius,
+                                                                feature_colname)
+  
+  ## Neighbourhood counts ----------
+  result[["neighbourhood_counts"]] <- neighbourhood_entropy_df[ , c("ref_cell_id", target_cell_types)]
+  
+  ## Cells in neighbourhood ----------
+  result[["cells_in_neighbourhood"]] <- neighbourhood_entropy_df[ , c("ref_cell_id", paste(target_cell_types, "_prop", sep = ""))]
+  
+  ## Neighbourhood_entropy --------------
+  result[["neighbourhood_entropy"]] <- neighbourhood_entropy_df[ , c("ref_cell_id", paste(target_cell_types, "_entropy", sep = ""))]
+  
+  ## Mixing score -----------------
+  for (target_cell_type in target_cell_types) {
+    mixing_score_df <- data.frame(matrix(nrow = 1, ncol = length(mixing_score_df_colnames)))
+    colnames(mixing_score_df) <- mixing_score_df_colnames
+    mixing_score_df$ref_cell_type <- reference_cell_type
+    
+    # No need to fill in mixing_score_df if the reference and target cell is the same
+    if (reference_cell_type != target_cell_type) {
+      mixing_score_df$tar_cell_type <- target_cell_type
+      mixing_score_df$n_ref_cells <- sum(spe[[feature_colname]] == reference_cell_type)
+      mixing_score_df$n_tar_cells <- sum(spe[[feature_colname]] == target_cell_type)
+      mixing_score_df$n_ref_tar_interactions <- sum(neighbourhood_entropy_df[[target_cell_type]])
+      mixing_score_df$n_ref_ref_interactions <- sum(neighbourhood_entropy_df[[reference_cell_type]])
+      mixing_score_df$mixing_score <- mixing_score_df$n_ref_tar_interactions / (0.5 * mixing_score_df$n_ref_ref_interactions)
+      mixing_score_df$normalised_mixing_score <- 0.5 * mixing_score_df$mixing_score * mixing_score_df$n_ref_cells / mixing_score_df$n_tar_cell
+      if (is.infinite(mixing_score_df$mixing_score)) mixing_score_df$mixing_score <- NA
+      if (is.infinite(mixing_score_df$normalised_mixing_score)) mixing_score_df$normalised_mixing_score <- NA
+      result[["mixing_score"]][[target_cell_type]] <- mixing_score_df
+    }
+  }
+  
+  ## Cross_K ---------------------
+  cross_K_df <- data.frame(matrix(nrow = 1, ncol = length(cross_K_df_colnames)))
+  colnames(cross_K_df) <- cross_K_df_colnames
+  cross_K_df$reference <- reference_cell_type
+  cross_K_df$expected <- pi * radius^2
+  
+  for (target_cell_type in target_cell_types) {
+    cross_K_df[[target_cell_type]] <- ((area * sum(neighbourhood_entropy_df[[target_cell_type]])) / length(spe[[feature_colname]]) ^ 2)
+  }
+  result[["cross_K"]] <- cross_K_df
+  
+  ## Cross_L ---------------------
+  cross_L_df <- cross_K_df
+  cross_L_df[ , c("expected", target_cell_types)] <- (cross_L_df[ , c("expected", target_cell_types)] / (pi)) ^ (1/2)
+  result[["cross_L"]] <- cross_L_df
+  
+  ## Cross_G ---------------------
+  for (target_cell_type in target_cell_types) {
+    cross_G_df <- data.frame(matrix(nrow = 1, ncol = length(cross_G_df_colnames)))
+    colnames(cross_G_df) <- cross_G_df_colnames
+    
+    reference_target_interactions <- neighbourhood_entropy_df[[target_cell_type]]
+    n_target_cells <- sum(spe[[feature_colname]] == target_cell_type)
+    target_cell_type_intensity <- n_target_cells / area
+    observed_cross_G <- sum(reference_target_interactions != 0) / length(reference_target_interactions)
+    expected_cross_G <- 1 - exp(-1 * target_cell_type_intensity * pi * radius^2)
+    
+    cross_G_df$observed_cross_G <- observed_cross_G
+    cross_G_df$expected_cross_G <- expected_cross_G
+    result[["cross_G"]][[target_cell_type]] <- cross_G_df
+  }
+  
+  
+  ## Fast_co_occurrence ---------------
+  all_cell_types <- unique(spe[[feature_colname]])
+  
+  neighbourhood_counts_df <- calculate_neighbourhood_counts2D(spe,
+                                                              reference_cell_type,
+                                                              all_cell_types,
+                                                              radius,
+                                                              feature_colname)
+  
+  neighbourhood_counts_df$total <- rowSums(neighbourhood_counts_df[, -1], na.rm = TRUE)
+  
+  fast_co_occurrence_df <- data.frame(matrix(nrow = 1, ncol = length(fast_co_occurrence_df_colnames)))
+  colnames(fast_co_occurrence_df) <- fast_co_occurrence_df_colnames
+  fast_co_occurrence_df$reference <- reference_cell_type
+  
+  # Get total number of cells in radius around reference cell type
+  n_cells_in_reference_cell_type_radius <- sum(neighbourhood_counts_df$total)
+  
+  # Get total number of cells in radius around all cell types
+  n_cells_in_all_cell_type_radius <- dbscan::frNN(SpatialExperiment::spatialCoords(spe),
+                                                  eps = radius,
+                                                  query = SpatialExperiment::spatialCoords(spe),
+                                                  sort = FALSE)
+  n_cells_in_all_cell_type_radius <- sum(rapply(n_cells_in_all_cell_type_radius$id, base::length))
+  
+  for (target_cell_type in target_cell_types) {
+    
+    # Account for case where not enough target cells in the data
+    if (sum(spe[[feature_colname]] == target_cell_type) <= 1) {
+      fast_co_occurrence_df[[target_cell_type]] <- NA
+      next
+    }
+    
+    # Get total number of target cells in radius around reference cell type
+    n_target_cells_in_reference_cell_type_radius <- sum(neighbourhood_counts_df[[target_cell_type]])
+    
+    # Get proportion of target cells in radius around reference cell type
+    target_cell_type_proportion_in_reference_cell_type_radius <- n_target_cells_in_reference_cell_type_radius / n_cells_in_reference_cell_type_radius
+    
+    # Get total number of target cells in radius around all cell types
+    n_target_cells_in_all_cell_type_radius <- dbscan::frNN(SpatialExperiment::spatialCoords(spe)[spe[[feature_colname]] == target_cell_type, ],
+                                                           eps = radius,
+                                                           query = SpatialExperiment::spatialCoords(spe),
+                                                           sort = FALSE)
+    n_target_cells_in_all_cell_type_radius <- sum(rapply(n_target_cells_in_all_cell_type_radius$id, base::length))
+    
+    # Get proportion of target cells in radius around all cell types
+    target_cell_type_proportion_in_all_cell_type_radius <- n_target_cells_in_all_cell_type_radius / n_cells_in_all_cell_type_radius
+    
+    # Get co-occurence value for target cell type
+    target_cell_type_co_occurrence <- target_cell_type_proportion_in_reference_cell_type_radius / target_cell_type_proportion_in_all_cell_type_radius
+    
+    # Add to result data frame
+    fast_co_occurrence_df[[target_cell_type]] <- target_cell_type_co_occurrence
+  }
+  result[["fast_co_occurrence"]] <- fast_co_occurrence_df
+  
+  return(result)
 }
+# Plot spatial data----
+spe2D <- read.csv("~/R/non_interactive_slurm/SD1_dfs/spe1.csv")
 
-plot_COO(SD1_metric_df_list, simulation = 1, reference_cell_type = "B")
-
-plot_CL <- function(metric_df_list, simulation) {
-  simulation <- as.character(simulation)
-  
-  CL_metric_df <- SD1_metric_df_list$metric_df_list2D$CL
-  CL_metric_df_subset <- CL_metric_df[CL_metric_df$simulation == simulation & CL_metric_df$reference == CL_metric_df$target, ]
-  CL_metric_df_subset_plot <- reshape2::melt(CL_metric_df_subset)
-  CL_metric_df_subset_plot$variable <- as.numeric(gsub("r", "", CL_metric_df_subset_plot$variable))
-  
-  CL_metric_df_subset_plot <- rbind(CL_metric_df_subset_plot, data.frame(simulation = simulation,
-                                                                         reference = "NA",
-                                                                         target = "expected",
-                                                                         variable = unique(CL_metric_df_subset_plot$variable),
-                                                                         value = unique(CL_metric_df_subset_plot$variable)))
-  
-  fig <- ggplot(CL_metric_df_subset_plot, aes(variable, value, color = target)) +
-    geom_line()
-  methods::show(fig)
-  
-}
-
-plot_CL(SD1_metric_df_list, simulation = 1)
-
-plot_CG <- function(metric_df_list, simulation) {
-  simulation <- as.character(simulation)
-  
-  CG_metric_df <- SD1_metric_df_list$metric_df_list2D$CG
-  CG_metric_df_subset <- CG_metric_df[CG_metric_df$simulation == simulation & CG_metric_df$reference == CG_metric_df$target, ]
-  CG_metric_df_subset_plot <- reshape2::melt(CG_metric_df_subset)
-  CG_metric_df_subset_plot$variable <- as.numeric(gsub("r", "", CG_metric_df_subset_plot$variable))
-  
-  CG_metric_df_subset_plot <- rbind(CG_metric_df_subset_plot, data.frame(simulation = simulation,
-                                                                         reference = "NA",
-                                                                         target = "expected",
-                                                                         variable = unique(CG_metric_df_subset_plot$variable),
-                                                                         value = 1))
-  
-  fig <- ggplot(CG_metric_df_subset_plot, aes(variable, value, color = target)) +
-    geom_line()
-  methods::show(fig)
-  
-}
-
-plot_CG(SD1_metric_df_list, simulation = 1)
-
-
+ggplot(spe2D,
+       aes(Cell.X.Position, Cell.Y.Position, color = Cell.Type)) +
+  geom_point(size = 4) +
+  theme_bw() +
+  labs(x = "x", y = "y", color = "Cell Type") +
+  theme(
+    # X and Y axis titles
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    
+    # X and Y axis tick labels
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    
+    # Legend title
+    legend.title = element_text(size = 14),
+    
+    # Legend labels
+    legend.text = element_text(size = 12)
+  )
 
 # Comparing SPIAT and squidpy -----
 SD1_metric_df_list <- readRDS("~/R/non_interactive_slurm/SD1_metric_df_list.RDS")
-spiat_co_df <- SD1_metric_df_list$metric_df_list2D$COO
+spiat_co_df <- SD1_metric_df_list$metric_df_list2D$FCO
 spiat_L_df <- SD1_metric_df_list$metric_df_list2D$CL
 spiat_G_df <- SD1_metric_df_list$metric_df_list2D$CG
 
@@ -571,7 +738,23 @@ compare_SPIAT_squidpy_co_occurrence <- function(spiat_df, squidpy_df, reference)
   spiat_squidpy_co_df$target_tool <- paste(spiat_squidpy_co_df$target, spiat_squidpy_co_df$tool, sep = "-")
   
   fig <- ggplot(spiat_squidpy_co_df, aes(radius, value, color = target_tool)) +
-    geom_line()
+    geom_line() +
+    theme_bw() +
+    labs(y = "Co-occurrence", color = "") +
+    scale_color_manual(
+      labels = c(
+        "A-SPIAT" = paste(reference, "/A using SPIAT", sep = ""),
+        "A-squidpy" = paste(reference, "/A using squidpy", sep = ""),
+        "B-SPIAT" = paste(reference, "/B using SPIAT", sep = ""),
+        "B-squidpy" = paste(reference, "/B using squidpy", sep = "")
+      ),
+      values = c(
+        "A-SPIAT" = "#48bbff",
+        "A-squidpy" = "#bb0036",
+        "B-SPIAT" = "#0062c5",
+        "B-squidpy" = "#770026"
+      )
+    )
   
   methods::show(fig)
 }
@@ -599,7 +782,23 @@ compare_SPIAT_squidpy_ripley_function <- function(spiat_df, squidpy_df) {
   spiat_squidpy_combined_df$target_tool <- paste(spiat_squidpy_combined_df$target, spiat_squidpy_combined_df$tool, sep = "-")
   
   fig <- ggplot(spiat_squidpy_combined_df, aes(radius, value, color = target_tool)) +
-    geom_line()
+    geom_line() +
+    theme_bw() +
+    labs(y = "Ripley's L function value", color = "") +
+    scale_color_manual(
+      labels = c(
+        "A-SPIAT" = "A/A using SPIAT",
+        "A-squidpy" = "A/A using squidpy",
+        "B-SPIAT" = "B/B using SPIAT",
+        "B-squidpy" = "B/B using squidpy"
+      ),
+      values = c(
+        "A-SPIAT" = "#48bbff",
+        "A-squidpy" = "#bb0036",
+        "B-SPIAT" = "#0062c5",
+        "B-squidpy" = "#770026"
+      )
+    )
   
   methods::show(fig)
 }
