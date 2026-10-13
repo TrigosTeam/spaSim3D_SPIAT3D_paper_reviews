@@ -1255,14 +1255,65 @@ mouse_hypothalamus_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_hy
 drosphilia_egg_metric_df_list <- readRDS("~/R/non_interactive_slurm/drosphilia_egg_metric_df_list.RDS")
 mouse_embryo_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_embryo_metric_df_list.RDS")
 
+
+# mouse_embryo_real_metric_df_lists <- list()
+# 
+# for (i in seq(7)) {
+#   print(i)
+# 
+#   mouse_embryo_real_metric_df_lists[[i]] <- readRDS(paste("~/R/non_interactive_slurm/mouse_embryo_real_metric_df_list", i, ".RDS", sep = ""))
+# 
+# 
+# }
+# 
+# 
+# mouse_embryo_real_metric_df_list <- list()
+# 
+# 
+# for (metric in metrics) {
+# 
+#   if (metric == "AMD") next
+# 
+#   metric_df <- data.frame()
+# 
+#   for (metric_df_list in mouse_embryo_real_metric_df_lists) {
+# 
+#     metric_df <- rbind(metric_df, metric_df_list[[metric]][!is.na(metric_df_list[[metric]]$data_type),])
+# 
+#   }
+#   mouse_embryo_real_metric_df_list[[metric]] <- metric_df
+# }
+# 
+# 
+# mouse_embryo_real_metric_df_list[["AMD"]] <- mouse_embryo_real_metric_df_lists[[1]][["AMD"]]
+# 
+# 
+# mouse_embryo_sim_metric_df_list <- readRDS("~/R/non_interactive_slurm/mouse_embryo_sim_metric_df_list.RDS")
+# 
+# 
+# mouse_embryo_metric_df_list <- list()
+# 
+# for (metric in metrics) {
+# 
+#   metric_df <- rbind(mouse_embryo_real_metric_df_list[[metric]], mouse_embryo_sim_metric_df_list[[metric]])
+# 
+#   mouse_embryo_metric_df_list[[metric]] <- metric_df
+# }
+
+
+
 metric_df_lists <- list(
   "mouse_hypothalamus" = mouse_hypothalamus_metric_df_list,
   "drosphilia_egg" = drosphilia_egg_metric_df_list,
   "mouse_embryo" = mouse_embryo_metric_df_list
 )
 
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "FCO_AUC", "ANC_AUC", "ANE_AUC", "ACIN_AUC",
-             "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD",
+             "ANC_AUC", "ACIN_AUC", "ANE_AUC",
+             "MS_AUC", "NMS_AUC",
+             "CK_AUC", "CL_AUC", "CG_AUC",
+             "FCO_AUC",
+             "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 plot_df <- data.frame()
 for (metric in metrics) {
@@ -1353,6 +1404,27 @@ metric_naming <- c(
   "EBSAC" = "EBSAC",
   "EBP_AUC" = "EBP"
 )
+
+plot_df$dataset <- factor(
+  plot_df$dataset,
+  levels = c("mouse_hypothalamus", "drosphilia_egg", "mouse_embryo")
+)
+
+cor_df$dataset <- factor(
+  cor_df$dataset,
+  levels = c("mouse_hypothalamus", "drosphilia_egg", "mouse_embryo")
+)
+
+plot_df$metric <- factor(
+  plot_df$metric,
+  levels = metrics
+)
+
+cor_df$metric <- factor(
+  cor_df$metric,
+  levels = metrics
+)
+
 
 fig <- ggplot(plot_df, aes(real, sim)) +
   geom_point() +
